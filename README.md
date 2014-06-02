@@ -1,46 +1,68 @@
 # cirrus
 Cloud Integration Reporting and Replication UtilitieS
 
-## Use
-```javascript
-cirrus -h
-```
-
-For a full list of available commands
-
-## Setup
+## Installation
 ```javascript
 npm install
 ```
 
-## Commands status
+## Usage
+```javascript
+cirrus [options]
+```
+
+## Options
+| Option             | Description                                              |
+|--------------------|----------------------------------------------------------|
+| -h, --help | output usage information |
+| -v, --version | output version number |
+| -c, --config <path> | path to config file relative to cirrus.js; defaults to config.json |
+| S3 |
+| --s3-list | list all buckets |
+| --s3-disk-use <bucket> | disk usage for objects in a specified bucket <bucket> |
+| --s3-create <bucket> | create bucket with name <bucket> |
+| --s3-remove <bucket> | remove bucket with name <bucket>, prompts if not empty |
+
+## Configuration
+Cirrus takes a JSON configuration file. By default, the script will look for config.json (but can be overriden with the -c <path> flag, with a relative path from the location of cirrus.js).
+
+```json
+{
+    "awsConfig": {
+	"accessKeyId": "yourPublicKeyHere",
+	"secretAccessKey": "yourPrivateKeyHere",
+	"region": "yourRegionHere"
+    },
+    "ec2": [
+
+    ]
+}
+```
+
+## TODOs
 ### full cloud
-- TODO --cloud-list
-- TODO --cloud-compare <path> path to existing compare, will compare with provided config
-- TODO --cloud-deploy
-- TODO --cloud-snapshot <path> path to store config
+- --cloud-list
+- --cloud-compare <path> path to existing compare, will compare with provided config
+- --cloud-deploy
+- --cloud-snapshot <path> path to store config
 
 ### ec2
-- TODO --ec2-list
-- TODO --ec2-stop
-- TODO --ec2-start
-- TODO --ec2-set-instance
-- TODO --ec2-attach-ebs
-- TODO --ec2-attach-elasticip
-- TODO --ec2-set-sg
+- --ec2-list
+- --ec2-stop
+- --ec2-start
+- --ec2-set-instance
+- --ec2-attach-ebs
+- --ec2-attach-elasticip
+- --ec2-set-sg
 
 ### s3
-- --s3-list
-- --s3-create
-- --s3-remove
-- --s3-disk-use
-- TODO --s3-put
-- TODO --s3-get
-
-### security groups
-- TODO  --sg-list
+- --s3-put
+- --s3-get
 
 ### elasticip
-- TODO  --elasticip-list
-- TODO  --elasticip-release
-- TODO  --elasticip-create
+-  --elasticip-list
+-  --elasticip-release
+-  --elasticip-create
+
+### ebs
+-  --ebs-list
