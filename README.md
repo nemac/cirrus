@@ -17,7 +17,7 @@ cirrus [options]
 | -h, --help | output usage information |
 | -v, --version | output version number |
 | -c, --config <path> | path to config file relative to cirrus.js; defaults to config.json |
-| **S3** ||
+|   **S3**                              ||
 | --s3-list | list all buckets |
 | --s3-disk-use <bucket> | disk usage for objects in a specified bucket <bucket> |
 | --s3-create <bucket> | create bucket with name <bucket> |
