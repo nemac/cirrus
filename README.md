@@ -18,9 +18,11 @@ TODO --ec2-set-sg
 
 // s3
 --s3-list
-TODO --s3-create
+--s3-create
+--s3-remove
+--s3-disk-use
 TODO --s3-put
---s3-du
+TODO --s3-get
 
 // security groups
 TODO --sg-list
