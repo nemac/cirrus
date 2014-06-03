@@ -2,6 +2,9 @@ var colors = require( 'colors' );
 var helper = require( './helper' );
 var questions = require( 'questions' );
 var progress = require( 'progress' );
+var fs = require( 'fs' );
+var pathUtil = require( 'path' );
+var finder = require( 'findit' );
 
 var maxKeys = 1000000000;
 
@@ -12,7 +15,7 @@ var s3Utils = function ( aws ) {
 s3Utils.prototype = {
     list: function() {
         this.s3.listBuckets( function( err, data ){
-            if ( helper.err( err ) ) return;
+            if ( err ) return helper.err( err );
             
             data.Buckets.forEach( function( bucket ) {
                 console.log( bucket.Name );
@@ -26,7 +29,7 @@ s3Utils.prototype = {
         };
         
         this.s3.listObjects( params, function( err, data ) {
-            if ( helper.err( err ) ) return;
+            if ( err ) return helper.err( err );
 
             if ( data.IsTruncated ) {
                 console.log( 'WARNING\n'.yellow + 'Only the first %s objects were scanned', data.MaxKeys );
@@ -49,7 +52,7 @@ s3Utils.prototype = {
         };
         
         this.s3.createBucket(params, function( err, data ) {
-            if ( helper.err( err ) ) return;
+            if ( err ) return helper.err( err );
         });
     },
     remove: function( bucket ) {
@@ -84,6 +87,23 @@ s3Utils.prototype = {
             
             emptyBucket( t, bucket, 0 );
         });
+    },
+    put: function( bucket, path ) {
+        var s3 = this.s3;
+        
+        try {
+            fs.stat( path, function( err, stats ){
+                if ( stats.isFile() ) {
+                    putFile( s3, bucket, path, pathUtil.basename( path ));
+                } else {
+                    putDir( s3, bucket, path );
+                }
+            });
+        } catch ( err ) {
+            console.log( 'in catch' );
+            
+            helper.err( err );
+        }
     }
  };
 
@@ -94,7 +114,7 @@ function emptyBucket( t, bucket, count ) {
     };
         
     t.s3.listObjects( params, function( err, data ) {
-        if ( helper.err( err ) ) return;
+        if ( err ) return helper.err( err );
                 
         var objParams = {
             Bucket: bucket,
@@ -111,15 +131,13 @@ function emptyBucket( t, bucket, count ) {
                 
         for ( var i = 0; i < data.Contents.length; i++ ) {
             objParams.Key = data.Contents[i].Key;
-                    
-            try {
-                t.s3.deleteObject( objParams, function( err ) {
-                    if ( err ) throw err;
-                });
-            } catch ( e ) {
-                helper.err( e );
-                break;
-            }
+
+            t.s3.deleteObject( objParams, function( err ) {
+                if ( err ) {
+                    helper.err( e );
+                    process.exit( 1 );
+                }
+            });
             
             bar.tick( 1 );
             count++;
@@ -131,9 +149,75 @@ function emptyBucket( t, bucket, count ) {
         } else {
             t.remove( bucket );
             console.log();
-            console.log( '%s items deleted, %s removed'.green, count, bucket );
+            console.log( '%s items deleted, %s removed', count, bucket );
         }
     });
+}
+
+function putDir( s3, bucket, path ) {
+    path = pathUtil.normalize( path );
+    
+    var files = [];
+    
+    console.log( 'Finding files ');
+    finder( path ).on( 'file', function( file ) {
+        files.push( file );
+    }).on( 'end', function(){
+        console.log();
+        var bar = new progress( '  uploading [:bar] :percent :etas', {
+            complete: '=',
+            incomplete: ' ',
+            width: 20,
+            total: files.length - 1
+        });
+        
+        for (var i = 0; i < files.length; i++) {
+            if ( i < files.length - 1 ) {
+                putFile( s3, bucket, files[i], getRelativeFile( files[i], path ), bar );
+            } else {
+                putFile( s3, bucket, files[i], getRelativeFile( files[i], path ), bar, files.length );
+            }
+        };
+    });
+}
+
+function putFile( s3, bucket, fileName, key, bar, len ) {
+    var fileBuffer = fs.readFileSync( fileName );
+    var contentType = getContentType( fileName ); //todo
+        
+    s3.putObject({
+        Bucket: bucket,
+        Key: key,
+        ACL: 'private', // todo: parameterize ACL?
+        Body: fileBuffer,
+        ContentType: contentType
+    }, function( err ) {
+        if ( err ) {
+            helper.err( err );
+            process.exit( 1 );
+        } else {
+            if ( bar ) {
+                bar.tick( 1 );    
+                if ( len ) {
+                    console.log();
+                    console.log( '\n%s files uploaded to %s', len, bucket );
+                }
+            }
+        }
+    });
+}
+
+function getRelativeFile( fileName, path ) {
+    return fileName.replace( path, '' ).replace( /\\/g, '/');
+}
+
+function getContentType( fileName ) {
+    var type = 'application/octet-stream';
+    //var fn = fileName.toLowerCase();
+    
+    // todo: add list of types here from fn above
+
+    return type;
 }
 
 module.exports = s3Utils;
