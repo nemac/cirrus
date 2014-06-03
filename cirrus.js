@@ -1,34 +1,63 @@
-#! /usr/bin/node
+#! /usr/bin/env node
 var aws = require( 'aws-sdk' );
-var cli = require( 'commander' );
+var ArgumentParser = require( 'argparse' ).ArgumentParser;
+
+var parser = new ArgumentParser({
+    version: '0.0.1',
+    addHelp: true,
+    description: 'Utilities for AWS cloud management' 
+});
 
 // command-line interface
-cli
-    .version( '0.0.1' )
-    .option( '-c, --config <path>', 'path to config file relative to app.js; \n \t \t \t \t defaults to ./config.json' )
-    // s3 operations
-    .option( '--s3-list', 'list all buckets' )
-    .option( '--s3-disk-use <bucket>', 'disk usage for objects in a specified bucket <bucket>')
-    .option( '--s3-create <bucket>', 'create bucket with name <bucket>')
-    .option( '--s3-remove <bucket>', 'remove bucket with name <bucket>, prompts if not empty')
-    .parse( process.argv );
+parser.addArgument( ['-c', '--config'], {
+    help: 'path to config file relative to app.js; \n \t \t \t \t defaults to ./config.json',
+    nargs: 1,
+    metavar: '<path>'
+});
+
+parser.addArgument( ['--s3-list'], {
+    help: 'list all buckets',
+    action: 'storeTrue'
+});
+
+parser.addArgument( ['--s3-disk-use'], {
+    help: 'disk usage for objects in a specified bucket <bucket>',
+    nargs: 1,
+    metavar: '<bucket>'
+});
+
+parser.addArgument( ['--s3-create'], {
+    help: 'create bucket with name <bucket>',
+    nargs: 1,
+    metavar: '<bucket>'
+});
+
+parser.addArgument( ['--s3-remove'], {
+    help: 'remove bucket with name <bucket>, prompts if not empty',
+    nargs: 1,
+    metavar: '<bucket>'
+});
+
+var args = parser.parseArgs();
 
 // load from command-line arg, failover to config.json; will always look relative to script location
-var config = require( cli.config ? __dirname + '/' + cli.config : __dirname + '/config.json' );
+var config = require( args.config ? __dirname + '/' + args.config : __dirname + '/config.json' );
 aws.config.update( config.awsConfig );
 
 // s3 utils
-if ( cli['s3List'] || cli['s3DiskUse'] || cli['s3Create'] || cli['s3Remove'] ) {
+if ( args['s3_list'] || args['s3_diskUse'] || args['s3_create'] || args['s3_remove'] ) {
     var s3Util = require( './modules/s3.js' );
     var s3 = new s3Util( aws );
     
-    if ( cli['s3List'] ) {
+    if ( args['s3_list'] ) {
         s3.list();
-    } else if( cli['s3DiskUse'] ) {
-        s3.du( cli['s3DiskUse'] );
-    } else if( cli['s3Create'] ) {
-        s3.create( cli['s3Create'] );
-    } else if ( cli['s3Remove'] ) {
-        s3.remove( cli['s3Remove'] );
+    } else if( args['s3_disk_use'] ) {
+        s3.du( args['s3_disk_use'] );
+    } else if( args['s3_create'] ) {
+        s3.create( args['s3_create'] );
+    } else if ( args['s3_remove'] ) {
+        s3.remove( args['s3_remove'] );
     }
+} else {
+    console.log( parser.printHelp() );
 }

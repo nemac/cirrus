@@ -18,7 +18,7 @@
   "homepage": "https://github.com/cmy2k/cirrus",
   "dependencies": {
     "aws-sdk": "~2.0.0",
-    "commander": "~2.2.0",
+    "argparse": "~0.1.15",
     "colors": "~0.6.2",
     "questions": "~0.0.6",
     "progress": "~1.1.5"
