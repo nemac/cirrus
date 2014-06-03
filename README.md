@@ -19,9 +19,10 @@ cirrus [options]
 | -c, --config <path> | path to config file relative to cirrus.js; defaults to config.json |
 |   **S3**                              ||
 | --s3-list | list all buckets |
-| --s3-disk-use <bucket> | disk usage for objects in a specified bucket <bucket> |
-| --s3-create <bucket> | create bucket with name <bucket> |
-| --s3-remove <bucket> | remove bucket with name <bucket>, prompts if not empty |
+| --s3-disk-use <bucket> | disk usage for objects in a specified <bucket> |
+| --s3-create <bucket> | create <bucket> |
+| --s3-remove <bucket> | remove <bucket>, prompts if not empty |
+| --s3-put <bucket> <path> | put into destination <bucket> items in <path> recursively (if dir) |
 
 ## Configuration
 Cirrus takes a JSON configuration file. By default, the script will look for config.json (but can be overriden with the -c <path> flag, with a relative path from the location of cirrus.js).
@@ -56,7 +57,6 @@ Cirrus takes a JSON configuration file. By default, the script will look for con
 - --ec2-set-sg
 
 ### s3
-- --s3-put
 - --s3-get
 
 ### elasticip
