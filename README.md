@@ -53,11 +53,9 @@ Cirrus takes a JSON configuration file. By default, the script will look for con
 
 ```json
 {
-    "awsConfig": {
-	"accessKeyId": "yourPublicKeyHere",
-	"secretAccessKey": "yourPrivateKeyHere",
-	"region": "yourRegionHere"
-    }
+    "accessKeyId": "yourPublicKeyHere",
+    "secretAccessKey": "yourPrivateKeyHere",
+    "region": "yourRegionHere"
 }
 ```
 
