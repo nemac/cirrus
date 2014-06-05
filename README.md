@@ -7,9 +7,25 @@ npm install
 ```
 
 ## Usage
+Cirrus supports a series of sub-commands related to key elements of the AWS cloud infrastructure.
+For example, to get disk use by a bucket called "myBucket"
+
 ```javascript
-cirrus [options]
+cirrus s3 du myBucket
 ```
+
+At each level, help can be provided with the -h flag. For example, to get help for cirrus, the command is:
+
+```javascript
+cirrus -h
+```
+
+To get help with the S3 commands:
+
+```javascript
+cirrus s3 -h
+```
+
 
 ## Options
 | Option             | Description                                              |
@@ -18,11 +34,13 @@ cirrus [options]
 | -v, --version | output version number |
 | -c, --config &lt;path&gt; | path to config file relative to cirrus.js; defaults to config.json |
 |   **S3**                              ||
-| --s3-list | list all buckets |
-| --s3-disk-use &lt;bucket&gt; | disk usage for objects in a specified &lt;bucket&gt; |
-| --s3-create &lt;bucket&gt; | create &lt;bucket&gt; |
-| --s3-remove &lt;bucket&gt; | remove &lt;bucket&gt;, prompts if not empty |
-| --s3-put &lt;bucket&gt; &lt;path&gt; | put into destination &lt;bucket&gt; items in &lt;path&gt; recursively (if dir) |
+| -h | help for S3 commands |
+| ls | list all buckets |
+| du &lt;bucket&gt; | disk usage for objects in a specified &lt;bucket&gt; |
+| mkdir &lt;bucket&gt; | create &lt;bucket&gt; |
+| rm &lt;bucket&gt; | remove &lt;bucket&gt;, prompts if not empty |
+| scp &lt;bucket&gt; &lt;path&gt; | put into destination &lt;bucket&gt; items in &lt;path&gt; recursively (if dir) |
+
 
 ## Configuration
 Cirrus takes a JSON configuration file. By default, the script will look for config.json (but can be overriden with the -c &lt;path&gt; flag, with a relative path from the location of cirrus.js).
@@ -33,12 +51,13 @@ Cirrus takes a JSON configuration file. By default, the script will look for con
 	"accessKeyId": "yourPublicKeyHere",
 	"secretAccessKey": "yourPrivateKeyHere",
 	"region": "yourRegionHere"
-    },
-    "ec2": [
-
-    ]
+    }
 }
 ```
+
+aws.json
+
+aws.json.sample
 
 ## TODOs
 ### full cloud
@@ -58,6 +77,8 @@ Cirrus takes a JSON configuration file. By default, the script will look for con
 
 ### s3
 - --s3-get
+- --s3-rename
+- --s3-copy (can we do this?)
 
 ### elasticip
 -  --elasticip-list

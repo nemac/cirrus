@@ -93,6 +93,12 @@ s3Utils.prototype = {
         
         try {
             fs.stat( path, function( err, stats ){
+		console.log( stats );
+		if ( typeof stats === 'undefined' ) {
+		    helper.err ( { code: 'File not found', message: 'Please check the source path' } );
+		    process.exit( 1 );
+		}
+
                 if ( stats.isFile() ) {
                     putFile( s3, bucket, path, pathUtil.basename( path ));
                 } else {
@@ -100,8 +106,6 @@ s3Utils.prototype = {
                 }
             });
         } catch ( err ) {
-            console.log( 'in catch' );
-            
             helper.err( err );
         }
     }

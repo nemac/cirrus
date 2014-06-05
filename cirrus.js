@@ -1,4 +1,5 @@
-#! /usr/bin/env node
+#!/usr/bin/env node
+
 var aws = require( 'aws-sdk' );
 var ArgumentParser = require( 'argparse' ).ArgumentParser;
 
@@ -6,68 +7,86 @@ var ArgumentParser = require( 'argparse' ).ArgumentParser;
 var parser = new ArgumentParser({
     version: '0.0.1',
     addHelp: true,
-    description: 'Utilities for AWS cloud management' 
-});
+    description: 'Utilities for AWS cloud management'  });
 
 // common
 parser.addArgument( ['-c', '--config'], {
-    help: 'path to config file relative to app.js; \n \t \t \t \t defaults to ./config.json',
+    help: 'path to config file relative to app.js; defaults to ./aws.json',
     nargs: 1,
-    metavar: '<path>'
-});
+    metavar: '<path>' });
+
+var subParsers = parser.addSubparsers({
+    title: 'subCommands',
+    dest: 'subCommandName' });
 
 // s3 args
-parser.addArgument( ['--s3-list'], {
-    help: 'list all buckets',
-    action: 'storeTrue'
-});
+var s3 = subParsers.addParser( 's3', { addHelp: true });
 
-parser.addArgument( ['--s3-disk-use'], {
-    help: 'disk usage for objects in a specified <bucket>',
-    nargs: 1,
-    metavar: '<bucket>'
-});
+var s3Sub = s3.addSubparsers({
+    title: 'S3 Sub Commands',
+    dest: 's3SubCommandName' });
 
-parser.addArgument( ['--s3-create'], {
-    help: 'create <bucket>',
-    nargs: 1,
-    metavar: '<bucket>'
-});
+s3Sub.addParser( 'ls', {
+    addHelp: true,
+    help: 'list all buckets' });
 
-parser.addArgument( ['--s3-remove'], {
-    help: 'remove <bucket>, prompts if not empty',
-    nargs: 1,
-    metavar: '<bucket>'
-});
+s3Sub.addParser( 'du', {
+    addHelp: true,
+    help: 'disk usage for objects in a specified bucket' })
+.addArgument( [ 'bucket' ]);
 
-parser.addArgument( ['--s3-put'], {
-    help: 'put into destination  <bucket> items in <path> recursively',
-    nargs: 2,
-    metavar: [ '<bucket>', '<path>' ]
-});
+s3Sub.addParser( 'mkdir', {
+    addHelp: true,
+    help: 'create bucket' })
+.addArgument( [ 'bucket' ]);
+
+s3Sub.addParser( 'rm', {
+    addHelp: true,
+    help: 'remove <bucket>, prompts if not empty' })
+.addArgument( [ 'bucket' ]);
+
+var s3scp = s3Sub.addParser( 'scp', {
+    addHelp: true,
+    help: 'copies contents into destination bucket' });
+s3scp.addArgument( [ 'source' ] );
+s3scp.addArgument( [ 'destination' ] );
+
+var s3cp = s3Sub.addParser( 'cp', {
+    addHelp: true,
+    help: 'copies source bucket into destination bucket' });
+s3cp.addArgument( [ 'source' ] );
+s3cp.addArgument( [ 'destination' ] );
 
 var args = parser.parseArgs();
 
 // load config from command-line arg, failover to config.json; will always look relative to script location
-var config = require( args.config ? __dirname + '/' + args.config : __dirname + '/config.json' );
-aws.config.update( config.awsConfig );
+var config = require( args.config ? __dirname + '/' + args.config[0] : __dirname + '/aws.json' );
+aws.config.update( config );
 
 // s3 utils
-if ( args['s3_list'] || args['s3_disk_use'] || args['s3_create'] 
-        || args['s3_remove'] || args['s3_put'] ) {
+if ( args.subCommandName === 's3' ) {
     var s3Util = require( './modules/s3.js' );
     var s3 = new s3Util( aws );
-    
-    if ( args['s3_list'] ) {
-        s3.list();
-    } else if( args['s3_disk_use'] ) {
-        s3.du( args['s3_disk_use'][0] );
-    } else if( args['s3_create'] ) {
-        s3.create( args['s3_create'][0] );
-    } else if ( args['s3_remove'] ) {
-        s3.remove( args['s3_remove'][0] );
-    } else if ( args['s3_put'] ) {
-        s3.put( args['s3_put'][0], args['s3_put'][1] );
+
+    switch ( args.s3SubCommandName ) {
+        case 'ls':
+	    s3.list();
+	    break;
+        case 'du':
+	    s3.du( args.bucket );
+	    break;
+        case 'mkdir':
+	    s3.create( args.bucket );
+	    break;
+        case 'rm':
+	    s3.remove( args.bucket );
+	    break;
+        case 'scp':
+  	    s3.put( args.source, args.destination);
+	    break;
+        case 'cp':
+	    console.log( 'cp' );
+    	    break;
     }
 } else {
     console.log( parser.printHelp() );
