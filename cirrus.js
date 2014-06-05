@@ -47,7 +47,7 @@ s3Sub.addParser( 'rm', {
 
 var s3scp = s3Sub.addParser( 'scp', {
     addHelp: true,
-    help: 'copies contents into destination bucket' });
+    help: 'copies contents from source into destination bucket' });
 s3scp.addArgument( [ 'source' ] );
 s3scp.addArgument( [ 'destination' ] );
 

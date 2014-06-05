@@ -88,7 +88,7 @@ s3Utils.prototype = {
             emptyBucket( t, bucket, 0 );
         });
     },
-    put: function( bucket, path ) {
+    put: function( path, bucket ) {
         var s3 = this.s3;
         
         try {
@@ -100,9 +100,9 @@ s3Utils.prototype = {
 		}
 
                 if ( stats.isFile() ) {
-                    putFile( s3, bucket, path, pathUtil.basename( path ));
+                    putFile( s3, path, bucket, pathUtil.basename( path ));
                 } else {
-                    putDir( s3, bucket, path );
+                    putDir( s3, path, bucket );
                 }
             });
         } catch ( err ) {
@@ -158,7 +158,7 @@ function emptyBucket( t, bucket, count ) {
     });
 }
 
-function putDir( s3, bucket, path ) {
+function putDir( s3, path, bucket ) {
     path = pathUtil.normalize( path );
     
     var files = [];
@@ -177,15 +177,15 @@ function putDir( s3, bucket, path ) {
         
         for (var i = 0; i < files.length; i++) {
             if ( i < files.length - 1 ) {
-                putFile( s3, bucket, files[i], getRelativeFile( files[i], path ), bar );
+                putFile( s3, files[i], bucket, getRelativeFile( files[i], path ), bar );
             } else {
-                putFile( s3, bucket, files[i], getRelativeFile( files[i], path ), bar, files.length );
+                putFile( s3, files[i], bucket, getRelativeFile( files[i], path ), bar, files.length );
             }
         };
     });
 }
 
-function putFile( s3, bucket, fileName, key, bar, len ) {
+function putFile( s3, fileName, bucket, key, bar, len ) {
     var fileBuffer = fs.readFileSync( fileName );
     var contentType = getContentType( fileName ); //todo
         

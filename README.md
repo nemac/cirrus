@@ -39,7 +39,7 @@ cirrus s3 -h
 | du &lt;bucket&gt; | disk usage for objects in a specified &lt;bucket&gt; |
 | mkdir &lt;bucket&gt; | create &lt;bucket&gt; |
 | rm &lt;bucket&gt; | remove &lt;bucket&gt;, prompts if not empty |
-| scp &lt;bucket&gt; &lt;path&gt; | put into destination &lt;bucket&gt; items in &lt;path&gt; recursively (if dir) |
+| scp &lt;path&gt; &lt;bucket&gt; | put into destination &lt;bucket&gt; items in &lt;path&gt; recursively (if dir) |
 
 
 ## Configuration
