@@ -33,29 +33,29 @@ s3Sub.addParser( 'ls', {
 s3Sub.addParser( 'du', {
     addHelp: true,
     help: 'disk usage for objects in a specified bucket' })
-.addArgument( [ 'bucket' ]);
+.addArgument( [ 'bucket' ], { metavar: '<bucket>' });
 
 s3Sub.addParser( 'mkdir', {
     addHelp: true,
     help: 'create bucket' })
-.addArgument( [ 'bucket' ]);
+.addArgument( [ 'bucket' ], { metavar: '<bucket>' } );
 
 s3Sub.addParser( 'rm', {
     addHelp: true,
     help: 'remove <bucket>, prompts if not empty' })
-.addArgument( [ 'bucket' ]);
+.addArgument( [ 'bucket' ], { metavar: '<bucket>' });
 
 var s3scp = s3Sub.addParser( 'scp', {
     addHelp: true,
     help: 'copies contents from source into destination bucket' });
-s3scp.addArgument( [ 'source' ] );
-s3scp.addArgument( [ 'destination' ] );
+s3scp.addArgument( [ 'source' ], { metavar: '<source>' } );
+s3scp.addArgument( [ 'destination' ], { metavar: '<bucket>'} );
 
 var s3cp = s3Sub.addParser( 'cp', {
     addHelp: true,
     help: 'copies source bucket into destination bucket' });
-s3cp.addArgument( [ 'source' ] );
-s3cp.addArgument( [ 'destination' ] );
+s3scp.addArgument( [ 'source' ], { metavar: '<source>' } );
+s3scp.addArgument( [ 'destination' ], { metavar: '<bucket>' } );
 
 var args = parser.parseArgs();
 
