@@ -23,6 +23,7 @@
     "questions": "~0.0.6",
     "progress": "~1.1.5",
     "path": "~0.4.9",
-    "findit": "~1.2.0"
+    "findit": "~1.2.0",
+    "cli-table": "~0.3.0"
   }
 }

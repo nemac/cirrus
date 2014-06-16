@@ -20,10 +20,10 @@ var subParsers = parser.addSubparsers({
     dest: 'subCommandName' });
 
 // s3 args
-var s3 = subParsers.addParser( 's3', { addHelp: true });
+var s3Parser = subParsers.addParser( 's3', { addHelp: true });
 
-var s3Sub = s3.addSubparsers({
-    title: 'S3 Sub Commands',
+var s3Sub = s3Parser.addSubparsers({
+    title: 'S3 Subcommands',
     dest: 's3SubCommandName' });
 
 s3Sub.addParser( 'ls', {
@@ -57,6 +57,17 @@ var s3cp = s3Sub.addParser( 'cp', {
 s3scp.addArgument( [ 'source' ], { metavar: '<source>' } );
 s3scp.addArgument( [ 'destination' ], { metavar: '<bucket>' } );
 
+// ec2 args
+var ec2Parser = subParsers.addParser( 'ec2', { addHelp: true } );
+
+var ec2Sub = ec2Parser.addSubparsers({
+    title: 'EC2 Subcommands',
+    dest: 'ec2SubCommandName' });
+
+ec2Sub.addParser( 'ls', {
+    addHelp: true,
+    help: 'list all instances' });
+
 var args = parser.parseArgs();
 
 // load config from command-line arg, failover to config.json; will always look relative to script location
@@ -65,7 +76,7 @@ aws.config.update( config );
 
 // s3 utils
 if ( args.subCommandName === 's3' ) {
-    var s3Util = require( './modules/s3.js' );
+    var s3Util = require( './modules/s3' );
     var s3 = new s3Util( aws );
 
     switch ( args.s3SubCommandName ) {
@@ -88,6 +99,16 @@ if ( args.subCommandName === 's3' ) {
 	    console.log( 'cp' );
     	    break;
     }
+} else if ( args.subCommandName === 'ec2' ) {
+    var ec2Util = require( './modules/ec2' );
+    var ec2 = new ec2Util( aws );
+    
+    switch ( args.ec2SubCommandName ) {
+        case 'ls':
+            ec2.list();
+            break;
+    }
+    
 } else {
     console.log( parser.printHelp() );
 }

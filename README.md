@@ -46,6 +46,9 @@ cirrus s3 du -h
 | mkdir &lt;bucket&gt; | create &lt;bucket&gt; |
 | rm &lt;bucket&gt; | remove &lt;bucket&gt;, prompts if not empty |
 | scp &lt;path&gt; &lt;bucket&gt; | put items in &lt;path&gt; recursively (if dir) into destination &lt;bucket&gt; |
+|   **EC2**                              ||
+| -h | help for EC2 commands |
+| ls | list all instances |
 
 
 ## Configuration
@@ -71,7 +74,6 @@ aws.json.sample
 - --cloud-snapshot &lt;path&gt; path to store config
 
 ### ec2
-- --ec2-list
 - --ec2-stop
 - --ec2-start
 - --ec2-set-instance
@@ -82,7 +84,7 @@ aws.json.sample
 ### s3
 - --s3-get
 - --s3-rename
-- --s3-copy (can we do this?)
+- --s3-copy
 
 ### elasticip
 -  --elasticip-list
