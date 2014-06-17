@@ -24,7 +24,7 @@ var subParsers = parser.addSubparsers({
 var s3Parser = subParsers.addParser( 's3', { addHelp: true });
 
 var s3Sub = s3Parser.addSubparsers({
-    title: 'S3 Subcommands',
+    title: 'S3 (Simple Storage Solution) Subcommands',
     dest: 's3SubCommandName' });
 
 s3Sub.addParser( 'ls', {
@@ -62,7 +62,7 @@ s3cp.addArgument( ['destination'], { metavar: '<bucket>' } );
 var ec2Parser = subParsers.addParser( 'ec2', { addHelp: true } );
 
 var ec2Sub = ec2Parser.addSubparsers({
-    title: 'EC2 Subcommands',
+    title: 'EC2 (Elastic Cloud Compute) Subcommands',
     dest: 'ec2SubCommandName' });
 
 ec2Sub.addParser( 'ls', {
@@ -114,7 +114,7 @@ ec2SetInstance.addArgument( ['-d, --dry-run'], {
 var eipParser = subParsers.addParser( 'eip', { addHelp: true } );
 
 var eipSub = eipParser.addSubparsers({
-    title: 'Elastic IP Subcommands',
+    title: 'EIP (Elastic IP) Subcommands',
     dest: 'eipSubCommandName' });
 
 eipSub.addParser( 'ls', {
@@ -140,6 +140,17 @@ eipSub.addParser( 'disassociate', {
     addHelp: true,
     help: 'disassocates Elastic IP address from an instance' })
 .addArgument( ['associationId'], { metavar: '<association id>' });
+
+// ebs args
+var ebsParser = subParsers.addParser( 'ebs', { addHelp: true } );
+
+var ebsSub = ebsParser.addSubparsers({
+    title: 'EBS (Elastic Block Store) Subcommands',
+    dest: 'ebsSubCommandName' });
+
+ebsSub.addParser( 'ls', {
+    addHelp: true,
+    help: 'list all instances' });
 
 var args = parser.parseArgs();
 
@@ -230,6 +241,16 @@ if ( args.subCommandName === 's3' ) {
         case 'disassociate':
             eip.disassociate( args.associationId );
     }
+} else if ( args.subCommandName === 'ebs' ) {
+    var EBS = require( './modules/ebs' );
+    var ebs = new EBS( aws );
+    
+    switch ( args.ebsSubCommandName ) {
+        case 'ls':
+            ebs.list();
+            break;
+    }
+    
 } else {
     console.log( parser.printHelp() );
 }

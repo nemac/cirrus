@@ -9,7 +9,7 @@ EC2.prototype = {
     list: function() {
         this.ec2.describeInstances( {}, function( err, data ) {
             if ( err ) return helper.err( err );
-                        
+
             var reservations = data.Reservations;
             
             if ( reservations.length === 0 ) return console.log( 'No EC2 instances.' );
@@ -42,12 +42,12 @@ EC2.prototype = {
                 // TODO add EBS info?
                 table.push([
                     ins.InstanceId, 
-                    tags.join( ',' ), 
+                    tags.join( ', ' ), 
                     ins.InstanceType, 
                     ins.State.Name, 
                     ins.PublicIpAddress ? ins.PublicIpAddress : '', 
                     ins.KeyName, 
-                    groups.join( ',' ) 
+                    groups.join( ', ' ) 
                 ]);
             });
 
