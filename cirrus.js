@@ -2,6 +2,7 @@
 
 var aws = require( 'aws-sdk' );
 var ArgumentParser = require( 'argparse' ).ArgumentParser;
+var Table = require( 'cli-table' );
 
 // command-line interface
 var parser = new ArgumentParser({
@@ -33,29 +34,29 @@ s3Sub.addParser( 'ls', {
 s3Sub.addParser( 'du', {
     addHelp: true,
     help: 'disk usage for objects in a specified bucket' })
-.addArgument( [ 'bucket' ], { metavar: '<bucket>' });
+.addArgument( ['bucket'], { metavar: '<bucket>' });
 
 s3Sub.addParser( 'mkdir', {
     addHelp: true,
     help: 'create bucket' })
-.addArgument( [ 'bucket' ], { metavar: '<bucket>' } );
+.addArgument( ['bucket'], { metavar: '<bucket>' } );
 
 s3Sub.addParser( 'rm', {
     addHelp: true,
     help: 'remove <bucket>, prompts if not empty' })
-.addArgument( [ 'bucket' ], { metavar: '<bucket>' });
+.addArgument( ['bucket'], { metavar: '<bucket>' });
 
 var s3scp = s3Sub.addParser( 'scp', {
     addHelp: true,
     help: 'copies contents from source into destination bucket' });
-s3scp.addArgument( [ 'source' ], { metavar: '<source>' } );
-s3scp.addArgument( [ 'destination' ], { metavar: '<bucket>'} );
+s3scp.addArgument( ['source'], { metavar: '<source>' } );
+s3scp.addArgument( ['destination'], { metavar: '<bucket>'} );
 
 var s3cp = s3Sub.addParser( 'cp', {
     addHelp: true,
     help: 'copies source bucket into destination bucket' });
-s3scp.addArgument( [ 'source' ], { metavar: '<source>' } );
-s3scp.addArgument( [ 'destination' ], { metavar: '<bucket>' } );
+s3cp.addArgument( ['source'], { metavar: '<source>' } );
+s3cp.addArgument( ['destination'], { metavar: '<bucket>' } );
 
 // ec2 args
 var ec2Parser = subParsers.addParser( 'ec2', { addHelp: true } );
@@ -66,7 +67,79 @@ var ec2Sub = ec2Parser.addSubparsers({
 
 ec2Sub.addParser( 'ls', {
     addHelp: true,
-    help: 'list all instances' });
+    help: 'list all instances' })
+.addArgument( ['-t, --types'], {
+    help: 'list available instance types',
+    action: 'storeTrue',
+    dest: 'types' });
+
+var ec2Stop = ec2Sub.addParser( 'stop', {
+    addHelp: true,
+    help: 'stops a specified instance' });
+ec2Stop.addArgument( ['instance'], { metavar: '<instance>' });
+ec2Stop.addArgument( ['-d, --dry-run'], {
+    help: 'perform a dry run stop',
+    action: 'storeTrue',
+    dest: 'dryRun'});
+
+var ec2Start = ec2Sub.addParser( 'start', {
+    addHelp: true,
+    help: 'starts a specified instance' });
+ec2Start.addArgument( ['instance'], { metavar: '<instance>' });
+ec2Start.addArgument( ['-d, --dry-run'], {
+    help: 'perform a dry run start',
+    action: 'storeTrue',
+    dest: 'dryRun'});
+
+var ec2Terminate = ec2Sub.addParser( 'terminate', {
+    addHelp: true,
+    help: 'terminates a specified instance' });
+ec2Terminate.addArgument( ['instance'], { metavar: '<instance>' });
+ec2Terminate.addArgument( ['-d, --dry-run'], {
+    help: 'perform a dry run termination',
+    action: 'storeTrue',
+    dest: 'dryRun'});
+
+var ec2SetInstance = ec2Sub.addParser( 'setinstance', {
+    addHelp: true,
+    help: 'set the instance type for a specified instance' });
+ec2SetInstance.addArgument( ['instance'], { metavar: '<instance>' });
+ec2SetInstance.addArgument( ['type'], { metavar: '<type>' });
+ec2SetInstance.addArgument( ['-d, --dry-run'], {
+    help: 'perform a dry run termination',
+    action: 'storeTrue',
+    dest: 'dryRun'});
+
+// elastic ip args
+var eipParser = subParsers.addParser( 'eip', { addHelp: true } );
+
+var eipSub = eipParser.addSubparsers({
+    title: 'Elastic IP Subcommands',
+    dest: 'eipSubCommandName' });
+
+eipSub.addParser( 'ls', {
+    addHelp: true,
+    help: 'list all Elastic IP addresses' });
+
+eipSub.addParser( 'allocate', {
+    addHelp: true,
+    help: 'creates a new Elastic IP address' });
+
+eipSub.addParser( 'release', {
+    addHelp: true,
+    help: 'release Elastic IP address' })
+.addArgument( ['allocationId'], { metavar: '<allocation id>' });
+
+var eipAssociate = eipSub.addParser( 'associate', {
+    addHelp: true,
+    help: 'associates Elastic IP with instance' });
+eipAssociate.addArgument( ['allocationId'], { metavar: '<allocation id>' } );
+eipAssociate.addArgument( ['instance'], { metavar: '<instance>' } );
+
+eipSub.addParser( 'disassociate', {
+    addHelp: true,
+    help: 'disassocates Elastic IP address from an instance' })
+.addArgument( ['associationId'], { metavar: '<association id>' });
 
 var args = parser.parseArgs();
 
@@ -76,8 +149,8 @@ aws.config.update( config );
 
 // s3 utils
 if ( args.subCommandName === 's3' ) {
-    var s3Util = require( './modules/s3' );
-    var s3 = new s3Util( aws );
+    var S3 = require( './modules/s3' );
+    var s3 = new S3( aws );
 
     switch ( args.s3SubCommandName ) {
         case 'ls':
@@ -100,15 +173,63 @@ if ( args.subCommandName === 's3' ) {
     	    break;
     }
 } else if ( args.subCommandName === 'ec2' ) {
-    var ec2Util = require( './modules/ec2' );
-    var ec2 = new ec2Util( aws );
+    var EC2 = require( './modules/ec2' );
+    var ec2 = new EC2( aws );
     
     switch ( args.ec2SubCommandName ) {
         case 'ls':
-            ec2.list();
+            if ( args.types ) {
+                var instanceTable = new Table({
+                    head: [
+                        'Family'.cyan,
+                        'Types'.cyan ] });
+                
+                instanceTable.push(
+                    [ 'General purpose', 'm1.small, m1.medium, m1.large, m1.xlarge, m3.medium, \nm3.large, m3.xlarge, m3.2xlarge' ],
+                    [ 'Compute optimized', 'c1.medium, c1.xlarge, c3.large, c3.xlarge, c3.2xlarge, \nc3.4xlarge, c3.8xlarge, cc2.8xlarge' ],
+                    [ 'Memory optimized', 'm2.xlarge, m2.2xlarge, m2.4xlarge, r3.large, r3.xlarge, \nr3.2xlarge, r3.4xlarge, r3.8xlarge, cr1.8xlarge' ],
+                    [ 'Storage optimized', 'hi1.4xlarge, hs1.8xlarge, i2.xlarge, i2.2xlarge, \ni2.4xlarge, i2.8xlarge' ],
+                    [ 'Micro instances', 't1.micro' ],
+                    [ 'GPU instances', 'cg1.4xlarge, g2.2xlarge' ]);
+                
+                console.log( instanceTable.toString());
+            } else {
+                ec2.list();
+            }
+            break;
+        case 'stop':
+            ec2.stop( args.instance, args.dryRun );
+            break;
+        case 'start':
+            ec2.start( args.instance, args.dryRun );
+            break;
+        case 'terminate':
+            ec2.terminate( args.instance, args.dryRun );
+            break;
+        case 'setinstance':
+            ec2.setInstance( args.instance, args.type, args.dryRun );
             break;
     }
+} else if ( args.subCommandName === 'eip' ) {
+    var EIP = require( './modules/eip' );
+    var eip = new EIP( aws );
     
+    switch ( args.eipSubCommandName ) {
+        case 'ls':
+            eip.list();
+            break;
+        case 'allocate':
+            eip.allocate();
+            break;
+        case 'release':
+            eip.release( args.allocationId );
+            break;
+        case 'associate':
+            eip.associate( args.allocationId, args.instance );
+            break;
+        case 'disassociate':
+            eip.disassociate( args.associationId );
+    }
 } else {
     console.log( parser.printHelp() );
 }

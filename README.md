@@ -48,8 +48,17 @@ cirrus s3 du -h
 | scp &lt;path&gt; &lt;bucket&gt; | put items in &lt;path&gt; recursively (if dir) into destination &lt;bucket&gt; |
 |   **EC2**                              ||
 | -h | help for EC2 commands |
-| ls | list all instances |
-
+| ls &#91;-t, --types&#93; | list all instances &#91;lists instance types&#93; |
+| stop &lt;instance&gt; | stop &lt;instance&gt; |
+| start &lt;instance&gt; | start &lt;instance&gt; |
+| terminate &lt;instance&gt; | terminate &lt;instance&gt; |
+| setinstance &lt;instance&gt; &lt;type&gt; | sets &lt;instance&gt; to be specified &lt;type&gt; |
+|   **EIP**                              ||
+| -h | help for EIP (Elastic IP) commands |
+| allocate | request a new Elastic IP address |
+| release &lt;allocation ID&gt; | releases an Elastic IP allocation &lt;allocation id&gt; |
+| associate &lt;allocation ID&gt; &lt;instance&gt; | associates an Elastic IP allocation &lt;allocation id&gt; with an &lt;instance&gt; |
+| disassociate &lt;association ID&gt; | disassociates an Elastic IP association &lt;association id&gt; between an EIP allocation and and instance |
 
 ## Configuration
 Cirrus takes a JSON configuration file. By default, the script will look for config.json (but can be overriden with the -c &lt;path&gt; flag, with a relative path from the location of cirrus.js).
@@ -74,10 +83,8 @@ aws.json.sample
 - --cloud-snapshot &lt;path&gt; path to store config
 
 ### ec2
-- --ec2-stop
-- --ec2-start
-- --ec2-set-instance
 - --ec2-attach-ebs
+- --ec2-detach-ebs
 - --ec2-attach-elasticip
 - --ec2-set-sg
 
@@ -86,10 +93,8 @@ aws.json.sample
 - --s3-rename
 - --s3-copy
 
-### elasticip
--  --elasticip-list
--  --elasticip-release
--  --elasticip-create
-
 ### ebs
 -  --ebs-list
+
+### eip
+- work with entities by their IP addresses?

@@ -8,11 +8,11 @@ var finder = require( 'findit' );
 
 var maxKeys = 1000000000;
 
-var s3Utils = function ( aws ) {
+var S3 = function ( aws ) {
     this.s3 = new aws.S3();
 };
 
-s3Utils.prototype = {
+S3.prototype = {
     list: function() {
         this.s3.listBuckets( function( err, data ){
             if ( err ) return helper.err( err );
@@ -224,4 +224,4 @@ function getContentType( fileName ) {
     return type;
 }
 
-module.exports = s3Utils;
+module.exports = S3;
