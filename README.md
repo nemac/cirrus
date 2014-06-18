@@ -88,12 +88,9 @@ aws.json.sample
 
 ### ec2
 - create
-- setsg
+
+### sg
 - list sg?
-- create sg?
-- grant/revoke sg ingress/egress?
-- delete sg?
-- move sg ops into own subcommand?
 
 ### s3
 - get contents
@@ -111,3 +108,26 @@ aws.json.sample
 
 ### eip
 - work with entities by their IP addresses?
+
+## Version 2
+### sg
+- setsg
+- create sg?
+- grant/revoke sg ingress/egress?
+- delete sg?
+- move sg ops into own subcommand?
+
+
+
+##
+--> tags column optional (if has more tags than name) always show name column)
+ENFORCE NAME TAG - confirm uniqueness (EC2, EBS volumes)
+	-> use name tag for instance reference (stop myInstance)
+	-> have way to rename instance (still enforce uniqueness)
+
+	then in args, can specify name
+	-> check first if there is something with the name, if not, check if instance id equal to arg
+
+--> make table lines optional (maybe -h flag?)
+
+--> volumes

@@ -19,8 +19,7 @@ EBS.prototype = {
                     'Volume ID'.cyan,
                     'Size (GiB)'.cyan,
                     'State'.cyan,
-                    'Attachments'.cyan,
-                    'Encrypted'.cyan
+                    'Attachment'.cyan
                 ]
             });
             
@@ -28,19 +27,19 @@ EBS.prototype = {
                 
                 var attachments = [];
                 volume.Attachments.forEach( function( attachment ) {
-                    attachments.push( attachment.InstanceId + ' -> ' + attachment.Device );
+		    attachments.push( attachment.InstanceId + ' -> ' + attachment.Device );
                 });
-                
+
                 table.push([
                     volume.VolumeId,
                     volume.Size,
                     volume.State,
-                    attachments.join( ', ' ),
-                    volume.Encrypted
+                    attachments.length > 0 ? attachments.join( ', ' ) : ''
                 ]);
             });
+
+	    console.log( table.toString() );
             
-            console.log( table.toString() );
         });
     }
 };

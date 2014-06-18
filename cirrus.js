@@ -152,13 +152,23 @@ ebsSub.addParser( 'ls', {
     addHelp: true,
     help: 'list all instances' });
 
+// sg args
+var sgParser = subParsers.addParser( 'sg', { addHelp: true } );
+
+var sgSub = sgParser.addSubparsers({
+    title: 'SG (Security Groups) Subcommands',
+    dest: 'sgSubCommandName' });
+
+sgSub.addParser( 'ls', {
+    addHelp: true,
+    help: 'list all security groups' });
+
 var args = parser.parseArgs();
 
 // load config from command-line arg, failover to config.json; will always look relative to script location
 var config = require( args.config ? __dirname + '/' + args.config[0] : __dirname + '/aws.json' );
 aws.config.update( config );
 
-// s3 utils
 if ( args.subCommandName === 's3' ) {
     var S3 = require( './modules/s3' );
     var s3 = new S3( aws );
@@ -250,7 +260,17 @@ if ( args.subCommandName === 's3' ) {
             ebs.list();
             break;
     }
+
+} else if ( args.subCommandName === 'sg' ) {
+    var SG = require( './modules/sg' );
+    var sg = new SG( aws );
     
+    switch ( args.sgSubCommandName ) {
+        case 'ls':
+            sg.list();
+            break;
+    }
+
 } else {
     console.log( parser.printHelp() );
 }
