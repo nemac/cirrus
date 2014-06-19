@@ -1,29 +1,21 @@
 var helper = require( './helper' );
-var Table = require( 'cli-table' );
 
 var SG = function ( aws ) {
     this.ec2 = new aws.EC2();
 }
 
 SG.prototype = {
-    list: function() {
+    list: function( showBorders ) {
 	this.ec2.describeSecurityGroups( {}, function( err, data ) {
 	    var groups = data.SecurityGroups;
 
 	    if ( groups.length === 0 ) return console.log( 'No security groups.' );
 
-	    var table = new Table({
-		head: [
-		    'Group ID'.cyan,
-		    'Group Name'.cyan,
-		    'Inbound rules'.cyan,
-		    'Outbound rules'.cyan
-		]
-	    });
+	    var table = helper.table(
+		['Group ID', 'Group Name', 'Inbound rules', 'Outbound rules'],
+		showBorders );
 
 	    groups.forEach( function( group ) {
-		
-
 		table.push([
 		    group.GroupId,
 		    group.GroupName,

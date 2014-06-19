@@ -1,12 +1,11 @@
 var helper = require( './helper' );
-var Table = require( 'cli-table' );
 
 var EIP = function( aws ) {
     this.ec2 = new aws.EC2();
 };
 
 EIP.prototype = {
-    list: function() {
+    list: function( showBorders ) {
         this.ec2.describeAddresses( {}, function( err, data ) {
             if ( err ) return helper.err( err );
 
@@ -14,14 +13,9 @@ EIP.prototype = {
             
             if ( addresses.length === 0 ) return console.log( 'No Elastic IP addresses.' );
             
-            var table = new Table({
-                head: [
-                    'Allocation ID'.cyan,
-                    'Public IP'.cyan,
-                    'Association ID'.cyan,
-                    'Instance'.cyan
-                ]
-            });
+            var table = helper.table( 
+		['Allocation ID', 'Public IP', 'Association ID', 'Instance'],
+		showBorders );
 
             addresses.forEach( function( address ) {
                 table.push([
@@ -40,10 +34,12 @@ EIP.prototype = {
             if ( err ) return helper.err( err );
         });
     },
-    release: function( allocationId ) {
-        this.ec2.releaseAddress( { AllocationId: allocationId }, function( err, data ) {
-            if ( err ) return helper.err( err );
-        });
+    release: function( arg ) {
+	if ( arg.indexOf( '.' ) === -1 ) {
+	    releaseIp( this.ec2, arg );
+	} else {
+	    findEntityByIp( this.ec2, arg, 'AllocationId', releaseIp );
+	}
     },
     associate: function( allocationId, instance ) {
         var params = {
@@ -61,5 +57,29 @@ EIP.prototype = {
         });
     }
 };
+
+function findEntityByIp( ec2, ip, key, callback ) {
+    ec2.describeAddresses( { PublicIps: [ ip.toString() ] }, function( err, data ) {
+	if ( err ) {
+	    helper.err( err );
+	    process.exit( 1 );
+	} else {
+	    callback( ec2, data.Addresses[0][key] );
+	}
+    });
+}
+
+function releaseIp( ec2, allocationId ) {
+    ec2.releaseAddress( { AllocationId: allocationId }, function( err, data ) {
+        if ( err ) {
+	    helper.err( err );
+	    process.exit( 1 );
+	}
+    });
+}
+
+function associateIp( ec2, allocationId, instanceId ) {
+
+}
 
 module.exports = EIP;

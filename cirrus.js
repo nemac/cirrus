@@ -2,7 +2,7 @@
 
 var aws = require( 'aws-sdk' );
 var ArgumentParser = require( 'argparse' ).ArgumentParser;
-var Table = require( 'cli-table' );
+var helper = require( './modules/helper' );
 
 // command-line interface
 var parser = new ArgumentParser({
@@ -15,6 +15,11 @@ parser.addArgument( ['-c', '--config'], {
     help: 'path to config file relative to app.js; defaults to ./aws.json',
     nargs: 1,
     metavar: '<path>' });
+
+parser.addArgument( ['-b', '--borders'], {
+    help: 'show borders when displaying list output',
+    action: 'storeTrue'
+});
 
 var subParsers = parser.addSubparsers({
     title: 'subCommands',
@@ -169,108 +174,118 @@ var args = parser.parseArgs();
 var config = require( args.config ? __dirname + '/' + args.config[0] : __dirname + '/aws.json' );
 aws.config.update( config );
 
-if ( args.subCommandName === 's3' ) {
-    var S3 = require( './modules/s3' );
-    var s3 = new S3( aws );
+var showBorders = args.borders;
 
-    switch ( args.s3SubCommandName ) {
-        case 'ls':
-	    s3.list();
-	    break;
-        case 'du':
-	    s3.du( args.bucket );
-	    break;
-        case 'mkdir':
-	    s3.create( args.bucket );
-	    break;
-        case 'rm':
-	    s3.remove( args.bucket );
-	    break;
-        case 'scp':
-  	    s3.put( args.source, args.destination);
-	    break;
-        case 'cp':
-	    console.log( 'cp' );
-    	    break;
-    }
-} else if ( args.subCommandName === 'ec2' ) {
-    var EC2 = require( './modules/ec2' );
-    var ec2 = new EC2( aws );
+switch ( args.subCommandName ) {
+
+    case 's3':
+        var S3 = require( './modules/s3' );
+        var s3 = new S3( aws );
+
+        switch ( args.s3SubCommandName ) {
+            case 'ls':
+	        s3.list();
+	        break;
+            case 'du':
+	        s3.du( args.bucket );
+	        break;
+            case 'mkdir':
+	        s3.create( args.bucket );
+	        break;
+            case 'rm':
+	        s3.remove( args.bucket );
+	        break;
+            case 'scp':
+  	        s3.put( args.source, args.destination);
+	        break;
+            case 'cp':
+	        console.log( 'cp' );
+    	        break;
+        }
+        break;
+
+    case 'ec2':
+        var EC2 = require( './modules/ec2' );
+        var ec2 = new EC2( aws );
     
-    switch ( args.ec2SubCommandName ) {
-        case 'ls':
-            if ( args.types ) {
-                var instanceTable = new Table({
-                    head: [
-                        'Family'.cyan,
-                        'Types'.cyan ] });
+        switch ( args.ec2SubCommandName ) {
+            case 'ls':
+                if ( args.types ) {
+                    var instanceTable = helper.table( 
+		        ['Family', 'Types'], 
+		        showBorders );
                 
-                instanceTable.push(
-                    [ 'General purpose', 'm1.small, m1.medium, m1.large, m1.xlarge, m3.medium, \nm3.large, m3.xlarge, m3.2xlarge' ],
-                    [ 'Compute optimized', 'c1.medium, c1.xlarge, c3.large, c3.xlarge, c3.2xlarge, \nc3.4xlarge, c3.8xlarge, cc2.8xlarge' ],
-                    [ 'Memory optimized', 'm2.xlarge, m2.2xlarge, m2.4xlarge, r3.large, r3.xlarge, \nr3.2xlarge, r3.4xlarge, r3.8xlarge, cr1.8xlarge' ],
-                    [ 'Storage optimized', 'hi1.4xlarge, hs1.8xlarge, i2.xlarge, i2.2xlarge, \ni2.4xlarge, i2.8xlarge' ],
-                    [ 'Micro instances', 't1.micro' ],
-                    [ 'GPU instances', 'cg1.4xlarge, g2.2xlarge' ]);
-                
-                console.log( instanceTable.toString());
-            } else {
-                ec2.list();
-            }
-            break;
-        case 'stop':
-            ec2.stop( args.instance, args.dryRun );
-            break;
-        case 'start':
-            ec2.start( args.instance, args.dryRun );
-            break;
-        case 'terminate':
-            ec2.terminate( args.instance, args.dryRun );
-            break;
-        case 'setinstance':
-            ec2.setInstance( args.instance, args.type, args.dryRun );
-            break;
-    }
-} else if ( args.subCommandName === 'eip' ) {
-    var EIP = require( './modules/eip' );
-    var eip = new EIP( aws );
-    
-    switch ( args.eipSubCommandName ) {
-        case 'ls':
-            eip.list();
-            break;
-        case 'allocate':
-            eip.allocate();
-            break;
-        case 'release':
-            eip.release( args.allocationId );
-            break;
-        case 'associate':
-            eip.associate( args.allocationId, args.instance );
-            break;
-        case 'disassociate':
-            eip.disassociate( args.associationId );
-    }
-} else if ( args.subCommandName === 'ebs' ) {
-    var EBS = require( './modules/ebs' );
-    var ebs = new EBS( aws );
-    
-    switch ( args.ebsSubCommandName ) {
-        case 'ls':
-            ebs.list();
-            break;
-    }
+                    instanceTable.push(
+			['General purpose', 'm1.small, m1.medium, m1.large, m1.xlarge, m3.medium, \nm3.large, m3.xlarge, m3.2xlarge'],
+			['Compute optimized', 'c1.medium, c1.xlarge, c3.large, c3.xlarge, c3.2xlarge, \nc3.4xlarge, c3.8xlarge, cc2.8xlarge'],
+			['Memory optimized', 'm2.xlarge, m2.2xlarge, m2.4xlarge, r3.large, r3.xlarge, \nr3.2xlarge, r3.4xlarge, r3.8xlarge, cr1.8xlarge'],
+			['Storage optimized', 'hi1.4xlarge, hs1.8xlarge, i2.xlarge, i2.2xlarge, \ni2.4xlarge, i2.8xlarge'],
+			['Micro instances', 't1.micro'],
+			['GPU instances', 'cg1.4xlarge, g2.2xlarge']);
+                    console.log( instanceTable.toString());
+		} else {
+                    ec2.list( showBorders);
+		}
+                break;
+            case 'stop':
+                ec2.stop( args.instance, args.dryRun );
+                break;
+            case 'start':
+                ec2.start( args.instance, args.dryRun );
+                break;
+            case 'terminate':
+                ec2.terminate( args.instance, args.dryRun );
+                break;
+            case 'setinstance':
+                ec2.setInstance( args.instance, args.type, args.dryRun );
+                break;
+        }
+        break;
 
-} else if ( args.subCommandName === 'sg' ) {
-    var SG = require( './modules/sg' );
-    var sg = new SG( aws );
+    case 'eip':
+        var EIP = require( './modules/eip' );
+        var eip = new EIP( aws );
     
-    switch ( args.sgSubCommandName ) {
-        case 'ls':
-            sg.list();
-            break;
-    }
+        switch ( args.eipSubCommandName ) {
+            case 'ls':
+                eip.list( showBorders );
+                break;
+            case 'allocate':
+                eip.allocate();
+                break;
+            case 'release':
+                eip.release( args.allocationId );
+                break;
+            case 'associate':
+                eip.associate( args.allocationId, args.instance );
+                break;
+            case 'disassociate':
+                eip.disassociate( args.associationId );
+        }
+        break;
 
-} else {
-    console.log( parser.printHelp() );
+    case 'ebs':
+        var EBS = require( './modules/ebs' );
+        var ebs = new EBS( aws );
+    
+        switch ( args.ebsSubCommandName ) {
+            case 'ls':
+                ebs.list( showBorders );
+                break;
+        }
+        break;
+
+    case 'sg':
+        var SG = require( './modules/sg' );
+        var sg = new SG( aws );
+    
+        switch ( args.sgSubCommandName ) {
+            case 'ls':
+                sg.list( showBorders );
+                break;
+        }
+        break;
+
+    default:
+        console.log( parser.printHelp() );
 }
