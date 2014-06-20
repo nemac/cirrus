@@ -78,42 +78,26 @@ ec2Sub.addParser( 'ls', {
     action: 'storeTrue',
     dest: 'types' });
 
-var ec2Stop = ec2Sub.addParser( 'stop', {
+ec2Sub.addParser( 'stop', {
     addHelp: true,
-    help: 'stops a specified instance' });
-ec2Stop.addArgument( ['instance'], { metavar: '<instance>' });
-ec2Stop.addArgument( ['-d, --dry-run'], {
-    help: 'perform a dry run stop',
-    action: 'storeTrue',
-    dest: 'dryRun'});
+    help: 'stops a specified instance' })
+.addArgument( ['instance'], { metavar: '<instance>' });
 
-var ec2Start = ec2Sub.addParser( 'start', {
+ec2Sub.addParser( 'start', {
     addHelp: true,
-    help: 'starts a specified instance' });
-ec2Start.addArgument( ['instance'], { metavar: '<instance>' });
-ec2Start.addArgument( ['-d, --dry-run'], {
-    help: 'perform a dry run start',
-    action: 'storeTrue',
-    dest: 'dryRun'});
+    help: 'starts a specified instance' })
+.addArgument( ['instance'], { metavar: '<instance>' });
 
-var ec2Terminate = ec2Sub.addParser( 'terminate', {
+ec2Sub.addParser( 'terminate', {
     addHelp: true,
-    help: 'terminates a specified instance' });
-ec2Terminate.addArgument( ['instance'], { metavar: '<instance>' });
-ec2Terminate.addArgument( ['-d, --dry-run'], {
-    help: 'perform a dry run termination',
-    action: 'storeTrue',
-    dest: 'dryRun'});
+    help: 'terminates a specified instance' })
+.addArgument( ['instance'], { metavar: '<instance>' });
 
 var ec2SetInstance = ec2Sub.addParser( 'setinstance', {
     addHelp: true,
     help: 'set the instance type for a specified instance' });
 ec2SetInstance.addArgument( ['instance'], { metavar: '<instance>' });
 ec2SetInstance.addArgument( ['type'], { metavar: '<type>' });
-ec2SetInstance.addArgument( ['-d, --dry-run'], {
-    help: 'perform a dry run termination',
-    action: 'storeTrue',
-    dest: 'dryRun'});
 
 // elastic ip args
 var eipParser = subParsers.addParser( 'eip', { addHelp: true } );
@@ -228,16 +212,16 @@ switch ( args.subCommandName ) {
 		}
                 break;
             case 'stop':
-                ec2.stop( args.instance, args.dryRun );
+                ec2.stop( args.instance );
                 break;
             case 'start':
-                ec2.start( args.instance, args.dryRun );
+                ec2.start( args.instance );
                 break;
             case 'terminate':
-                ec2.terminate( args.instance, args.dryRun );
+                ec2.terminate( args.instance);
                 break;
             case 'setinstance':
-                ec2.setInstance( args.instance, args.type, args.dryRun );
+                ec2.setInstance( args.instance, args.type );
                 break;
         }
         break;

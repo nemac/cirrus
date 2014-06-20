@@ -71,47 +71,53 @@ EC2.prototype = {
             console.log( table.toString() );
         });
     },
-    stop: function( instance, dryRun ) {
-        var params = {
-            InstanceIds: [ instance ],
-            DryRun: dryRun
-        };
-        
-        this.ec2.stopInstances( params, function( err, data ) {
-            if ( err ) return helper.err( err );
+    stop: function( name ) {
+        var ec2 = this.ec2;
+        this.findEntity({
+            name: name
+        }).then( function( instance ) {
+            ec2.stopInstances({
+                InstanceIds: [ instance[0].InstanceId ]
+            }, function( err ) {
+                if ( err ) return helper.err( err );
+            });
         });
     },
-    start: function( instance, dryRun ) {
-        var params = {
-            InstanceIds: [instance],
-            DryRun: dryRun
-        };
-        
-        this.ec2.startInstances( params, function( err, data ) {
-            if ( err ) return helper.err( err );
+    start: function( name ) {
+        var ec2 = this.ec2;
+        this.findEntity({
+            name: name
+        }).then( function( instance ) {
+            ec2.startInstances({
+                InstanceIds: [ instance[0].InstanceId ]
+            }, function( err ) {
+                if ( err ) return helper.err( err );
+            });
         });
     },
-    terminate: function( instance, dryRun ) {
-        var params = {
-            InstanceIds: [instance],
-            DryRun: dryRun
-        };
-        
-        this.ec2.terminateInstances( params, function( err, data ) {
-            if ( err ) return helper.err( err );
+    terminate: function( name ) {
+        var ec2 = this.ec2;
+        this.findEntity({
+            name: name
+        }).then( function( instance ) {
+            ec2.terminateInstances({
+                InstanceIds: [ instance[0].InstanceId ]
+            }, function( err ) {
+                if ( err ) return helper.err( err );
+            });
         });
     },
-    setInstance: function( instance, type, dryRun ) {
-        var params = {
-            InstanceId: instance,
-            DryRun: dryRun,
-            InstanceType: {
-                Value: type
-            }
-        };
-        
-        this.ec2.modifyInstanceAttribute( params, function( err, data ) {
-            if ( err ) return helper.err( err );
+    setInstance: function( name, type ) {
+        var ec2 = this.ec2;
+        this.findEntity({
+            name: name
+        }).then( function( instance ) {
+            ec2.modifyInstanceAttribute({
+                InstanceId: instance[0].InstanceId,
+                InstanceType: { Value: type }
+            }, function( err ) {
+                if ( err ) return helper.err( err );
+            });
         });
     },
     findEntity: function( identifier ) {
@@ -130,6 +136,7 @@ EC2.prototype = {
             params,
             function( err, data ) {
                 if ( err ) {
+                    helper.err( err );
                     deferred.reject( err );
                 } else {
                     var instances = [];

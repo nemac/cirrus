@@ -92,12 +92,7 @@ aws.json.sample
 
 ### ec2
 - create
-- rename (confirm uniqueness)
-
-### s3
-- get contents
-- rename
-- copy bucket to another bucket
+- rename (enforce uniqueness)
 
 ### ebs
 - attach
@@ -107,7 +102,7 @@ aws.json.sample
 - create volume from snapshot
 - delete volume
 - bundle steps to resize volume?
-- rename (confirm uniqueness)
+- rename (enforce uniqueness)
 
 ## Version 2
 ### sg
@@ -115,6 +110,11 @@ aws.json.sample
 - create sg?
 - grant/revoke sg ingress/egress?
 - delete sg?
+
+### s3
+- get contents
+- rename
+- copy bucket to another bucket
 
 ## all
 - support multiple args for identifying entities (name, id, etc)

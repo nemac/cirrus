@@ -46,13 +46,10 @@ EIP.prototype = {
             });
 
             console.log( table.toString() );
-            
-        }).fail( function( err ) {
-            helper.err( err );
         });
     },
     allocate: function() {
-        this.ec2.allocateAddress( {}, function( err, data) {
+        this.ec2.allocateAddress( {}, function( err ) {
             if ( err ) return helper.err( err );
         });
     },
@@ -63,11 +60,9 @@ EIP.prototype = {
         }).then( function( address ) {
             ec2.releaseAddress({
                 AllocationId: address[0].AllocationId 
-            }, function( err, data ) {
+            }, function( err ) {
                 if ( err ) helper.err( err );
             });
-        }).fail( function( err ) {
-            helper.err( err );
         });
     },
     associate: function( ip, instance ) {
@@ -81,11 +76,9 @@ EIP.prototype = {
             ec2.associateAddress({
                 AllocationId: resp[0].value[0].AllocationId,
                 InstanceId: resp[1].value[0].InstanceId
-            }, function( err, data ) {
+            }, function( err ) {
                 if ( err ) return helper.err( err );
             });
-        }).fail( function( err ) {
-            helper.err( err );
         });
     },
     disassociate: function( ip ) {
@@ -98,8 +91,6 @@ EIP.prototype = {
             }, function( err ) {
                 if ( err ) return helper.err( err );
             });
-        }).fail( function( err ) {
-            helper.err( err );
         });
     },
     findEntity: function( identifier ) {
@@ -118,6 +109,7 @@ EIP.prototype = {
             params, 
             function( err, data ) {
                 if ( err ) {
+                    helper.err( err );
                     deferred.reject( err );
                 } else {
                     deferred.resolve( data.Addresses );
