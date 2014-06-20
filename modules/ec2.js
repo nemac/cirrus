@@ -1,4 +1,5 @@
 var helper = require( './helper' );
+var Q = require( 'q' );
 
 var EC2 = function( aws ) {
     this.ec2 = new aws.EC2();
@@ -6,6 +7,7 @@ var EC2 = function( aws ) {
 
 EC2.prototype = {
     list: function( showBorders ) {
+        // TODO can use this.findEntity promise
         this.ec2.describeInstances( {}, function( err, data ) {
             if ( err ) return helper.err( err );
 
@@ -111,6 +113,39 @@ EC2.prototype = {
         this.ec2.modifyInstanceAttribute( params, function( err, data ) {
             if ( err ) return helper.err( err );
         });
+    },
+    findEntity: function( identifier ) {
+        var params = {};
+        
+        if ( typeof identifier !== 'undefined' && identifier !== null ) {
+            // TODO: potentially add more keys
+            if ( identifier.hasOwnProperty( 'name' ) ) {
+                params = { 
+                    Filters: [{ Name: 'tag:Name', Values: [identifier.name] }]
+                };
+            }
+        }
+        var deferred = Q.defer();
+        this.ec2.describeInstances( 
+            params,
+            function( err, data ) {
+                if ( err ) {
+                    deferred.reject( err );
+                } else {
+                    var instances = [];
+                    
+                    // flatten structure
+                    data.Reservations.forEach( function( reservation ) {
+                        reservation.Instances.forEach( function( instance ) {
+                            instances.push( instance );
+                        });
+                    });
+                    
+                    deferred.resolve( instances );
+                }
+            });
+    
+        return deferred.promise;
     }
 };
 

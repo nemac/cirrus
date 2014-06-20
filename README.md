@@ -58,9 +58,9 @@ cirrus s3 du -h
 | -h | help for EIP commands |
 | ls | list all Elastic IPs |
 | allocate | request a new Elastic IP address |
-| release &lt;allocation ID&gt; | releases an Elastic IP allocation &lt;allocation id&gt; |
-| associate &lt;allocation ID&gt; &lt;instance&gt; | associates an Elastic IP allocation &lt;allocation id&gt; with an &lt;instance&gt; |
-| disassociate &lt;association ID&gt; | disassociates an Elastic IP association &lt;association id&gt; between an EIP allocation and and instance |
+| release &lt;ip&gt; | releases an Elastic IP allocation &lt;allocation id&gt; |
+| associate &lt;ip&gt; &lt;instance&gt; | associates an Elastic IP &lt;ip&gt; with an &lt;instance&gt; |
+| disassociate &lt;ip&gt; | disassociates an Elastic IP &lt;ip&gt; between an EIP allocation and and instance |
 |   **EBS (Elastic Block Store)**                              ||
 | -h | help for EBS commands |
 | ls | list all EBS volumes |
@@ -92,6 +92,7 @@ aws.json.sample
 
 ### ec2
 - create
+- rename (confirm uniqueness)
 
 ### s3
 - get contents
@@ -106,9 +107,7 @@ aws.json.sample
 - create volume from snapshot
 - delete volume
 - bundle steps to resize volume?
-
-### eip
-- work with entities by their IP addresses?
+- rename (confirm uniqueness)
 
 ## Version 2
 ### sg
@@ -117,10 +116,5 @@ aws.json.sample
 - grant/revoke sg ingress/egress?
 - delete sg?
 
-##
-ENFORCE NAME TAG - confirm uniqueness (EC2, EBS volumes)
-	-> use name tag for instance reference (stop myInstance)
-	-> have way to rename instance (still enforce uniqueness)
-
-	then in args, can specify name
-	-> check first if there is something with the name, if not, check if instance id equal to arg
+## all
+- support multiple args for identifying entities (name, id, etc)
