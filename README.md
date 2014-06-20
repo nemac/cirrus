@@ -50,6 +50,8 @@ cirrus s3 du -h
 |   **EC2 (Elastic Cloud Compute)**                              ||
 | -h | help for EC2 commands |
 | ls &#91;-t, --types&#93; | list all instances &#91;lists instance types&#93; |
+| create &lt;name&gt; &lt;ami&gt; &lt;type&gt; &lt;key&gt; | example: create foo ami-1624987f t1.micro MY_KEY |
+| rename &lt;oldname&gt; &lt;newname&gt; | renames instance from &lt;oldname&gt; to &lt;newname&gt;, enforces uniqueness |
 | stop &lt;instance&gt; | stop &lt;instance&gt; |
 | start &lt;instance&gt; | start &lt;instance&gt; |
 | terminate &lt;instance&gt; | terminate &lt;instance&gt; |
@@ -91,8 +93,7 @@ aws.json.sample
 - --cloud-snapshot &lt;path&gt; path to store config
 
 ### ec2
-- create
-- rename (enforce uniqueness)
+- specify sg on create
 
 ### ebs
 - attach
@@ -103,6 +104,7 @@ aws.json.sample
 - delete volume
 - bundle steps to resize volume?
 - rename (enforce uniqueness)
+
 
 ## Version 2
 ### sg

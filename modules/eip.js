@@ -13,8 +13,8 @@ EIP.prototype = {
         var ec2 = this.ec2;
         
         Q.allSettled([
-            this.findEntity(),
-            ec2util.findEntity()
+            this.findEntities(),
+            ec2util.findEntities()
         ]).then( function( resp ) {
             var addresses = resp[0].value;
             var instances = resp[1].value;
@@ -55,11 +55,11 @@ EIP.prototype = {
     },
     release: function( ip ) {
         var ec2 = this.ec2;
-        this.findEntity({
+        this.findEntities({
             ip: ip 
-        }).then( function( address ) {
+        }).then( function( addresses ) {
             ec2.releaseAddress({
-                AllocationId: address[0].AllocationId 
+                AllocationId: addresses[0].AllocationId 
             }, function( err ) {
                 if ( err ) helper.err( err );
             });
@@ -70,8 +70,8 @@ EIP.prototype = {
         var ec2 = this.ec2;
         
         Q.allSettled([
-            this.findEntity( { ip: ip } ),
-            ec2util.findEntity( { name: instance } )
+            this.findEntities({ ip: ip }),
+            ec2util.findEntities({ name: instance })
         ]).then( function( resp ) {
             ec2.associateAddress({
                 AllocationId: resp[0].value[0].AllocationId,
@@ -83,17 +83,17 @@ EIP.prototype = {
     },
     disassociate: function( ip ) {
         var ec2 = this.ec2;
-        this.findEntity({ 
+        this.findEntities({ 
             ip: ip 
-        }).then( function( address ) {
+        }).then( function( addresses ) {
             ec2.disassociateAddress({ 
-                AssociationId: address[0].AssociationId 
+                AssociationId: addresses[0].AssociationId 
             }, function( err ) {
                 if ( err ) return helper.err( err );
             });
         });
     },
-    findEntity: function( identifier ) {
+    findEntities: function( identifier ) {
         var params = {};
         
         if ( typeof identifier !== 'undefined' && identifier !== null ) {

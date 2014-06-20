@@ -78,6 +78,20 @@ ec2Sub.addParser( 'ls', {
     action: 'storeTrue',
     dest: 'types' });
 
+var ec2Create = ec2Sub.addParser( 'create', {
+    addHelp: true,
+    help: 'create instance' });
+ec2Create.addArgument( ['name'], { metavar: '<name>' });
+ec2Create.addArgument( ['ami'], { metavar: '<ami>' });
+ec2Create.addArgument( ['type'], { metavar: '<type>' });
+ec2Create.addArgument( ['key'], { metavar: '<key>' });
+
+var ec2Rename = ec2Sub.addParser( 'rename', {
+    addHelp: true,
+    help: 'rename instance' });
+ec2Rename.addArgument( ['oldname'], { metavar: '<oldname>' });
+ec2Rename.addArgument( ['newname'], { metavar: '<newname>' });
+
 ec2Sub.addParser( 'stop', {
     addHelp: true,
     help: 'stops a specified instance' })
@@ -211,6 +225,12 @@ switch ( args.subCommandName ) {
                     ec2.list( showBorders);
 		}
                 break;
+            case 'create':
+                ec2.create( args.name, args.ami, args.type, args.key );
+                break;
+            case 'rename':
+                ec2.rename( args.oldname, args.newname );
+                break;
             case 'stop':
                 ec2.stop( args.instance );
                 break;
@@ -245,6 +265,7 @@ switch ( args.subCommandName ) {
                 break;
             case 'disassociate':
                 eip.disassociate( args.associationId );
+                break;
         }
         break;
 

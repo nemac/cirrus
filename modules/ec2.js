@@ -7,42 +7,35 @@ var EC2 = function( aws ) {
 
 EC2.prototype = {
     list: function( showBorders ) {
-        // TODO can use this.findEntity promise
-        this.ec2.describeInstances( {}, function( err, data ) {
-            if ( err ) return helper.err( err );
-
-            var reservations = data.Reservations;
-            
-            if ( reservations.length === 0 ) return console.log( 'No EC2 instances.' );
-
-	    // check if tags other than name
+        this.findEntities(
+            //all
+        ).then( function( instances ) {
+            if ( instances.length === 0 ) return console.log( 'No EC2 instances.' );
+           
+            // check if tags other than name
 	    var hasTags = false;
-	    reservations.some( function( reservation ) {
-		return hasTags = reservation.Instances[0].Tags.length > 1;
+	    instances.some( function( instance ) {
+		return hasTags = instance.Tags.length > 1;
 	    });
 
 	    var head = ['ID', 'Name', 'Type', 'State', 'Public IP', 'Key Name', 'Security Groups'];
 
-	    if ( hasTags ) {
-		head.splice( 2, 0, 'Tags' );
-	    }
-
+	    if ( hasTags ) head.splice( 2, 0, 'Tags' );
+            
 	    var table = helper.table(
 		head,
 		showBorders
 	    );
             
-            reservations.forEach( function( reservation ) {
-                // TODO are there times when reservations have more than one instance?
-                var ins = reservation.Instances[0];
+            instances.forEach( function( instance ) {
                 var groups = [];
-                ins.SecurityGroups.forEach( function( sg ) {
+                instance.SecurityGroups.forEach( function( sg ) {
                     groups.push( sg.GroupName );
                 });
                 
 		var name = '';
                 var tags = [];
-                ins.Tags.forEach( function( tag ) {
+                instance.Tags.forEach( function( tag ) {
 		    if ( tag.Key === 'Name' ) {
 			name = tag.Value;
 		    } else {
@@ -51,33 +44,57 @@ EC2.prototype = {
                 });
 
 		var row = [
-                    ins.InstanceId,
+                    instance.InstanceId,
 		    name,
-                    ins.InstanceType,
-                    ins.State.Name,
-                    ins.PublicIpAddress ? ins.PublicIpAddress : '',
-                    ins.KeyName,
+                    instance.InstanceType,
+                    instance.State.Name,
+                    instance.PublicIpAddress ? instance.PublicIpAddress : '',
+                    instance.KeyName ? instance.KeyName : '',
                     groups.join( ', ' ) ];
                                 
                 // TODO add EBS info?
-
-		if ( hasTags ) {
-		    row.splice( 2, 0, tags.join( ', ' ) );
-		}
+		if ( hasTags ) row.splice( 2, 0, tags.join( ', ' ) );
 		
                 table.push( row );
             });
-
+            
             console.log( table.toString() );
+        });
+    },
+    create: function( name, image, type, keyName ) {
+        var ec2 = this.ec2;
+
+        this.findEntities({
+            name: name
+        }, true ).then( function( instances ) {
+            if ( instances.length > 0 ) {
+                return helper.err({
+                    code: 'Name not unique',
+                    message: 'The name provided for the instance is not unique. Please select another name.'
+                });
+            } else {
+                ec2.runInstances({
+                    ImageId: image,
+                    InstanceType: type,
+                    KeyName: keyName,
+                    MinCount: 1, 
+                    MaxCount: 1
+                }, function( err, data ) {
+                    if ( err ) return helper.err( err );
+                    
+                    renameInstance( ec2, data.Instances[0].InstanceId, name );
+                });
+            }
         });
     },
     stop: function( name ) {
         var ec2 = this.ec2;
-        this.findEntity({
+        
+        this.findEntities({
             name: name
-        }).then( function( instance ) {
+        }).then( function( instances ) {
             ec2.stopInstances({
-                InstanceIds: [ instance[0].InstanceId ]
+                InstanceIds: [ instances[0].InstanceId ]
             }, function( err ) {
                 if ( err ) return helper.err( err );
             });
@@ -85,11 +102,12 @@ EC2.prototype = {
     },
     start: function( name ) {
         var ec2 = this.ec2;
-        this.findEntity({
+        
+        this.findEntities({
             name: name
-        }).then( function( instance ) {
+        }).then( function( instances ) {
             ec2.startInstances({
-                InstanceIds: [ instance[0].InstanceId ]
+                InstanceIds: [ instances[0].InstanceId ]
             }, function( err ) {
                 if ( err ) return helper.err( err );
             });
@@ -97,11 +115,12 @@ EC2.prototype = {
     },
     terminate: function( name ) {
         var ec2 = this.ec2;
-        this.findEntity({
+        
+        this.findEntities({
             name: name
-        }).then( function( instance ) {
+        }).then( function( instances ) {
             ec2.terminateInstances({
-                InstanceIds: [ instance[0].InstanceId ]
+                InstanceIds: [ instances[0].InstanceId ]
             }, function( err ) {
                 if ( err ) return helper.err( err );
             });
@@ -109,18 +128,41 @@ EC2.prototype = {
     },
     setInstance: function( name, type ) {
         var ec2 = this.ec2;
-        this.findEntity({
+        
+        this.findEntities({
             name: name
-        }).then( function( instance ) {
+        }).then( function( instances ) {
             ec2.modifyInstanceAttribute({
-                InstanceId: instance[0].InstanceId,
+                InstanceId: instances[0].InstanceId,
                 InstanceType: { Value: type }
             }, function( err ) {
                 if ( err ) return helper.err( err );
             });
         });
     },
-    findEntity: function( identifier ) {
+    rename: function( oldName, newName ) {
+        var t = this;
+        
+        this.findEntities({
+            name: newName
+        }, true ).then( function( instances ) {
+            if ( instances.length > 0 ) {
+                return helper.err({
+                    code: 'Name not unique',
+                    message: 'The name provided for the instance is not unique. Please select another name.'
+                });
+            } else {
+                t.findEntities({
+                    name: oldName
+                }).then( function( instances ) {
+                    renameInstance( ec2, instances[0].InstanceId, newName );
+                });
+            }
+        });
+    },
+    
+    // TODO think of a better logical way to handle expectZeroEntities
+    findEntities: function( identifier, expectZeroEntities ) {
         var params = {};
         
         if ( typeof identifier !== 'undefined' && identifier !== null ) {
@@ -131,29 +173,61 @@ EC2.prototype = {
                 };
             }
         }
+        
         var deferred = Q.defer();
         this.ec2.describeInstances( 
             params,
             function( err, data ) {
                 if ( err ) {
+                    console.log( 'error' );
                     helper.err( err );
                     deferred.reject( err );
                 } else {
                     var instances = [];
                     
                     // flatten structure
+                    // TODO are there circumstances where this won't work?
                     data.Reservations.forEach( function( reservation ) {
                         reservation.Instances.forEach( function( instance ) {
                             instances.push( instance );
                         });
                     });
-                    
-                    deferred.resolve( instances );
+
+                    if ( typeof expectZeroEntities === 'undefined' || expectZeroEntities === null || expectZeroEntities === false ) {
+                        if ( instances.length > 0 ) {
+                            deferred.resolve( instances );
+                        } else {
+                            var e = {
+                                code: 'Name not found',
+                                message: 'The name provided for the instance was not found.'
+                            };
+
+                            helper.err( e );
+                            // TODO figure out JS error object thing, probably need to put legit error in here
+                            deferred.reject( e );
+                        }
+                    } else {
+                        deferred.resolve( instances );
+                    }
                 }
             });
     
         return deferred.promise;
     }
 };
+
+function renameInstance( ec2, id, name ) {
+    params = {
+        Resources: [id],
+        Tags: [{
+            Key: 'Name',
+            Value: name
+        }]
+    };
+    
+    ec2.createTags( params, function( err ) {
+        if ( err ) return helper.err( err );
+    });
+}
 
 module.exports = EC2;

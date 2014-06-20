@@ -2,7 +2,7 @@ var helper = require( './helper' );
 
 var SG = function ( aws ) {
     this.ec2 = new aws.EC2();
-}
+};
 
 SG.prototype = {
     list: function( showBorders ) {
@@ -28,7 +28,7 @@ SG.prototype = {
 	    console.log( table.toString() );
 	});
     }
-}
+};
 
 function summarizeIpRules( rules ) {
     var ports = [];
