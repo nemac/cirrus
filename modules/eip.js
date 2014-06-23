@@ -1,4 +1,3 @@
-var helper = require( './helper' );
 var Q = require( 'q' );
 var EC2util = require( './ec2' );
 
@@ -8,7 +7,8 @@ var EIP = function( aws ) {
 };
 
 EIP.prototype = {
-    list: function( showBorders ) {
+    list: function() {
+	var deferred = Q.defer();
         var ec2util = new EC2util( this.aws );
         var ec2 = this.ec2;
         
@@ -16,10 +16,30 @@ EIP.prototype = {
             this.findEntities(),
             ec2util.findEntities()
         ]).then( function( resp ) {
+	    if ( resp[0].state === 'rejected' || resp[1].state === 'rejected' ) {
+		return;
+	    }
+
+	    var response = {
+		message: ''
+	    };
+	    
             var addresses = resp[0].value;
             var instances = resp[1].value;
                 
-            if ( addresses.length === 0 ) return console.log( 'No Elastic IP addresses.' );
+            if ( addresses.length === 0 ) {
+		response.message = 'No Elastic IP addresses.';
+		return deferred.resolve( message );
+	    }
+
+	    response.table = {
+		head: [
+		    'Allocation ID', 
+		    'Public IP', 
+		    'Association ID', 
+		    'Instance' ],
+		rows: []
+	    };
             
             // map instances to addresses
             var instanceMap = {};
@@ -32,12 +52,8 @@ EIP.prototype = {
                 });
             });
 
-            var table = helper.table( 
-		['Allocation ID', 'Public IP', 'Association ID', 'Instance'],
-		showBorders );
-
             addresses.forEach( function( address ) {
-                table.push([
+                response.table.rows.push([
                     address.AllocationId,
                     address.PublicIp,
                     address.AssociationId ? address.AssociationId : 'Not associated',
@@ -45,15 +61,24 @@ EIP.prototype = {
                 ]);
             });
 
-            console.log( table.toString() );
-        });
+	    deferred.resolve( response );
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     allocate: function() {
+	var deferred = Q.defer();
         this.ec2.allocateAddress( {}, function( err ) {
-            if ( err ) return helper.err( err );
+            if ( err ) return deferred.reject( err );
+	    deferred.resolve();
         });
+
+	return deferred.promise;
     },
     release: function( ip ) {
+	var deferred = Q.defer();
         var ec2 = this.ec2;
         this.findEntities({
             ip: ip 
@@ -61,11 +86,17 @@ EIP.prototype = {
             ec2.releaseAddress({
                 AllocationId: addresses[0].AllocationId 
             }, function( err ) {
-                if ( err ) helper.err( err );
+		if ( err ) return deferred.reject( err );
+		deferred.resolve();
             });
-        });
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     associate: function( ip, instance ) {
+	var deferred = Q.defer();
         var ec2util = new EC2util( this.aws );
         var ec2 = this.ec2;
         
@@ -73,15 +104,25 @@ EIP.prototype = {
             this.findEntities({ ip: ip }),
             ec2util.findEntities({ name: instance })
         ]).then( function( resp ) {
+	    if ( resp[0].state === 'rejected' || resp[1].state === 'rejected' ) {
+		return;
+	    }
+
             ec2.associateAddress({
                 AllocationId: resp[0].value[0].AllocationId,
                 InstanceId: resp[1].value[0].InstanceId
             }, function( err ) {
-                if ( err ) return helper.err( err );
+		if ( err ) return deferred.reject( err );
+		deferred.resolve();
             });
-        });
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     disassociate: function( ip ) {
+	var deferred = Q.defer();
         var ec2 = this.ec2;
         this.findEntities({ 
             ip: ip 
@@ -89,9 +130,14 @@ EIP.prototype = {
             ec2.disassociateAddress({ 
                 AssociationId: addresses[0].AssociationId 
             }, function( err ) {
-                if ( err ) return helper.err( err );
+		if ( err ) return deferred.reject( err );
+		deferred.resolve();
             });
-        });
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     findEntities: function( identifier ) {
         var params = {};
@@ -109,7 +155,6 @@ EIP.prototype = {
             params, 
             function( err, data ) {
                 if ( err ) {
-                    helper.err( err );
                     deferred.reject( err );
                 } else {
                     deferred.resolve( data.Addresses );

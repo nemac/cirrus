@@ -1,34 +1,44 @@
-var helper = require( './helper' );
+var Q = require( 'q' );
 
 var EBS = function( aws ) {
     this.ec2 = new aws.EC2();
 };
 
 EBS.prototype = {
-    list: function( showBorders ) {
+    list: function() {
+	var deferred = Q.defer();
         this.ec2.describeVolumes( {}, function( err, data ) {
-            if ( err ) return helper.err( err );
+            if ( err ) return deferred.reject( err );
+
+	    var response = {
+		message: ''
+	    };
+
+	    var volumes = data.Volumes;
             
-            var volumes = data.Volumes;
-            
-            if ( volumes.length === 0 ) return console.log( 'No EBS volumes');
+	    if ( volumes.length === 0 ) {
+		response.message =  'No EBS volumes';
+		return deferred.resolve( response );
+	    }
+
+	    response.table = {
+		head: [],
+		rows: []
+	    };
             
 	    var hasTags = false;
 	    volumes.some( function( volume ) {
 		return hasTags = volume.Tags.length > 1;
 	    });
 
-	    var head = ['Volume ID', 'Name', 'Size (GiB)', 'State', 'Attachment'];
+	    response.table.head = ['Volume ID', 'Name', 'Size (GiB)', 'State', 'Attachment'];
 
 	    if ( hasTags ) {
-		head.splice( 2, 0, 'Tags' );
+		response.table.head.splice( 2, 0, 'Tags' );
 	    }
 
-	    var table = helper.table( 
-		head,
-		showBorders );
-            
-            volumes.forEach( function( volume ) {
+            // TODO map instance name with instanceid
+	    volumes.forEach( function( volume ) {
                 var attachments = [];
                 volume.Attachments.forEach( function( attachment ) {
 		    attachments.push( attachment.InstanceId + ' -> ' + attachment.Device );
@@ -46,22 +56,23 @@ EBS.prototype = {
                 });
 
 		var row = [
-                    volume.VolumeId,
+		    volume.VolumeId,
 		    name,
-                    volume.Size,
-                    volume.State,
-                    attachments.length > 0 ? attachments.join( ', ' ) : ''];
+		    volume.Size,
+		    volume.State,
+		    attachments.length > 0 ? attachments.join( ', ' ) : ''];
 
 		if ( hasTags ) {
 		    row.splice( 2, 0, tags.join( ', ' ) );
 		}
+                    
+		response.table.rows.push( row );
+	    });
 
-                table.push( row );
-            });
+	    deferred.resolve( response );
+	});
 
-	    console.log( table.toString() );
-            
-        });
+	return deferred.promise;
     }
 };
 

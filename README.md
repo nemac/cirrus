@@ -39,7 +39,8 @@ cirrus s3 du -h
 | -h, --help | output usage information |
 | -v, --version | output version number |
 | -b, --borders | show friendly bordered output for list table output |
-| -c, --config &lt;path&gt; | path to config file relative to cirrus.js; defaults to config.json |
+| -c, --cloud &lt;path&gt; | path to full cloud config file relative to cirrus.js; defaults to cloud.json |
+| -k, --keys &lt;path&gt; | path to keys file relative to cirrus.js; defaults to aws.json |
 |   **S3 (Simple Storage Solution)**                              ||
 | -h | help for S3 commands |
 | ls | list all buckets |
@@ -71,7 +72,7 @@ cirrus s3 du -h
 | ls | list all Security Groups |
 
 ## Configuration
-Cirrus takes a JSON configuration file. By default, the script will look for config.json (but can be overriden with the -c &lt;path&gt; flag, with a relative path from the location of cirrus.js).
+Cirrus can use two JSON configuration files. By default, the script will look for aws.json (required for all operations) and cloud.json (required for full cloud operations). The path and name of each configuration file can be overriden with the -k &lt;path&gt; flag for keys, and with the -c &lt;path&gt; flag for cloud with a relative path from the location of cirrus.js.
 
 ```json
 {

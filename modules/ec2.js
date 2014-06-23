@@ -7,10 +7,30 @@ var EC2 = function( aws ) {
 
 EC2.prototype = {
     list: function( showBorders ) {
+	var deferred = Q.defer();
         this.findEntities(
             //all
         ).then( function( instances ) {
-            if ( instances.length === 0 ) return console.log( 'No EC2 instances.' );
+	    var response = {
+		message: ''
+	    };
+	    
+            if ( instances.length === 0 ) {
+		response.message = 'No EC2 instances.';
+		deferred.resolve( response );
+	    }
+
+	    response.table = {
+		head: [
+		    'ID', 
+		    'Name', 
+		    'Type', 
+		    'State', 
+		    'Public IP', 
+		    'Key Name', 
+		    'Security Groups' ],
+		rows: []
+	    };
            
             // check if tags other than name
 	    var hasTags = false;
@@ -18,15 +38,8 @@ EC2.prototype = {
 		return hasTags = instance.Tags.length > 1;
 	    });
 
-	    var head = ['ID', 'Name', 'Type', 'State', 'Public IP', 'Key Name', 'Security Groups'];
-
-	    if ( hasTags ) head.splice( 2, 0, 'Tags' );
-            
-	    var table = helper.table(
-		head,
-		showBorders
-	    );
-            
+	    if ( hasTags ) response.table.head.splice( 2, 0, 'Tags' );
+                        
             instances.forEach( function( instance ) {
                 var groups = [];
                 instance.SecurityGroups.forEach( function( sg ) {
@@ -55,20 +68,25 @@ EC2.prototype = {
                 // TODO add EBS info?
 		if ( hasTags ) row.splice( 2, 0, tags.join( ', ' ) );
 		
-                table.push( row );
+                response.table.rows.push( row );
             });
             
-            console.log( table.toString() );
-        });
+	    deferred.resolve( response );
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     create: function( name, image, type, keyName ) {
+	var deferred = Q.defer();
         var ec2 = this.ec2;
 
         this.findEntities({
             name: name
         }, true ).then( function( instances ) {
             if ( instances.length > 0 ) {
-                return helper.err({
+		return deferred.reject({
                     code: 'Name not unique',
                     message: 'The name provided for the instance is not unique. Please select another name.'
                 });
@@ -80,14 +98,23 @@ EC2.prototype = {
                     MinCount: 1, 
                     MaxCount: 1
                 }, function( err, data ) {
-                    if ( err ) return helper.err( err );
-                    
-                    renameInstance( ec2, data.Instances[0].InstanceId, name );
+                    if ( err ) return deferred.reject( err );
+                    renameInstance( ec2, data.Instances[0].InstanceId, name )
+			.then( function() {
+			    deferred.resolve();
+			}).fail( function( err ) {
+			    deferred.reject( err );
+			});
                 });
             }
-        });
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     stop: function( name ) {
+	var deferred = Q.defer();
         var ec2 = this.ec2;
         
         this.findEntities({
@@ -96,11 +123,17 @@ EC2.prototype = {
             ec2.stopInstances({
                 InstanceIds: [ instances[0].InstanceId ]
             }, function( err ) {
-                if ( err ) return helper.err( err );
+                if ( err ) return deferred.reject( err );
+		deferred.resolve();
             });
-        });
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     start: function( name ) {
+	var deferred = Q.defer();
         var ec2 = this.ec2;
         
         this.findEntities({
@@ -109,11 +142,17 @@ EC2.prototype = {
             ec2.startInstances({
                 InstanceIds: [ instances[0].InstanceId ]
             }, function( err ) {
-                if ( err ) return helper.err( err );
+                if ( err ) return deferred.reject( err );
+		deferred.resolve();
             });
-        });
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     terminate: function( name ) {
+	var deferred = Q.defer();
         var ec2 = this.ec2;
         
         this.findEntities({
@@ -122,11 +161,17 @@ EC2.prototype = {
             ec2.terminateInstances({
                 InstanceIds: [ instances[0].InstanceId ]
             }, function( err ) {
-                if ( err ) return helper.err( err );
+                if ( err ) return deferred.reject( err );
+		deferred.resolve();
             });
-        });
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     setInstance: function( name, type ) {
+	var deferred = Q.defer();
         var ec2 = this.ec2;
         
         this.findEntities({
@@ -136,18 +181,24 @@ EC2.prototype = {
                 InstanceId: instances[0].InstanceId,
                 InstanceType: { Value: type }
             }, function( err ) {
-                if ( err ) return helper.err( err );
+                if ( err ) return deferred.reject( err );
+		deferred.resolve();
             });
-        });
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     rename: function( oldName, newName ) {
+	var deferred = Q.defer();
         var t = this;
         
         this.findEntities({
             name: newName
         }, true ).then( function( instances ) {
             if ( instances.length > 0 ) {
-                return helper.err({
+                return deferred.reject({
                     code: 'Name not unique',
                     message: 'The name provided for the instance is not unique. Please select another name.'
                 });
@@ -155,10 +206,22 @@ EC2.prototype = {
                 t.findEntities({
                     name: oldName
                 }).then( function( instances ) {
-                    renameInstance( ec2, instances[0].InstanceId, newName );
-                });
+		    // TODO renameInstance doesn't appear to be called here...
+                    renameInstance( ec2, instances[0].InstanceId, newName )
+			.then( function() {
+			    deferred.resolve();
+			}).fail( function ( err ) {
+			    deferred.reject( err );
+			});
+                }).fail( function( err ) {
+		    deferred.reject( err );
+		});
             }
-        });
+        }).fail( function( err ) {
+	    deferred.reject( err );
+	});
+
+	return deferred.promise;
     },
     
     // TODO think of a better logical way to handle expectZeroEntities
@@ -179,8 +242,6 @@ EC2.prototype = {
             params,
             function( err, data ) {
                 if ( err ) {
-                    console.log( 'error' );
-                    helper.err( err );
                     deferred.reject( err );
                 } else {
                     var instances = [];
@@ -197,14 +258,10 @@ EC2.prototype = {
                         if ( instances.length > 0 ) {
                             deferred.resolve( instances );
                         } else {
-                            var e = {
-                                code: 'Name not found',
+                            deferred.reject({
+				code: 'Name not found',
                                 message: 'The name provided for the instance was not found.'
-                            };
-
-                            helper.err( e );
-                            // TODO figure out JS error object thing, probably need to put legit error in here
-                            deferred.reject( e );
+                            });
                         }
                     } else {
                         deferred.resolve( instances );
@@ -217,6 +274,8 @@ EC2.prototype = {
 };
 
 function renameInstance( ec2, id, name ) {
+    console.log( 'rename instance');
+    var deferred = Q.defer();
     params = {
         Resources: [id],
         Tags: [{
@@ -224,10 +283,16 @@ function renameInstance( ec2, id, name ) {
             Value: name
         }]
     };
+
+    console.log( 'about to create tags function' );
     
     ec2.createTags( params, function( err ) {
-        if ( err ) return helper.err( err );
+	console.log( 'in create tags' );
+        if ( err ) return deferred.reject( err );
+	deferred.resolve();
     });
+
+    return deferred.promise;
 }
 
 module.exports = EC2;

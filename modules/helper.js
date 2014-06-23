@@ -1,16 +1,21 @@
 var colors = require( 'colors' );
 var Table = require( 'cli-table' );
 
+var commonInterface = {
+    table: {},
+    message: {}
+}
+
 exports.err = function( err ) {
     var code = err.code;
     console.log( '%s %s', code.red, err.message );
 };
 
-exports.table = function( head, hasBorders ) {
+exports.printTable = function( tbl, hasBorders ) {
     var chars = {};
     var formattedHead = [];
 
-    head.forEach( function( th ) {
+    tbl.head.forEach( function( th ) {
 	formattedHead.push( th.cyan );
     });
 
@@ -36,8 +41,14 @@ exports.table = function( head, hasBorders ) {
 	};
     }
 
-    return new Table({
+    var table = new Table({
 	chars: chars,
 	head: formattedHead
     });
+
+    tbl.rows.forEach( function( row ) {
+	table.push( row );
+    });
+
+    console.log( table.toString() );
 };

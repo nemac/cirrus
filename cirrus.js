@@ -3,6 +3,7 @@
 var aws = require( 'aws-sdk' );
 var ArgumentParser = require( 'argparse' ).ArgumentParser;
 var helper = require( './modules/helper' );
+var Q = require( 'q' );
 
 // command-line interface
 var parser = new ArgumentParser({
@@ -11,10 +12,16 @@ var parser = new ArgumentParser({
     description: 'Utilities for AWS cloud management'  });
 
 // common
-parser.addArgument( ['-c', '--config'], {
-    help: 'path to config file relative to app.js; defaults to ./aws.json',
+parser.addArgument( ['-k', '--keys'], {
+    help: 'path to keys file relative to app.js; defaults to ./aws.json',
     nargs: 1,
     metavar: '<path>' });
+
+parser.addArgument( ['-c', '--cloud'], {
+    help: 'path to keys file relative to app.js; defaults to ./cloud.json',
+    nargs: 1,
+    metavar: '<path>' });
+
 
 parser.addArgument( ['-b', '--borders'], {
     help: 'show borders when displaying list output',
@@ -169,128 +176,170 @@ sgSub.addParser( 'ls', {
 var args = parser.parseArgs();
 
 // load config from command-line arg, failover to config.json; will always look relative to script location
-var config = require( args.config ? __dirname + '/' + args.config[0] : __dirname + '/aws.json' );
-aws.config.update( config );
+var keys = require( args.keys ? __dirname + '/' + args.keys[0] : __dirname + '/aws.json' );
+aws.config.update( keys );
 
 var showBorders = args.borders;
 
+var promise;
+
 switch ( args.subCommandName ) {
+case 's3':
+    var S3 = require( './modules/s3' );
+    var s3 = new S3( aws );
 
-    case 's3':
-        var S3 = require( './modules/s3' );
-        var s3 = new S3( aws );
+    switch ( args.s3SubCommandName ) {
+    case 'ls':
+	promise = s3.list();
+	break;
+    case 'du':
+	promise = s3.du( args.bucket );
+	break;
+    case 'mkdir':
+	promise = s3.create( args.bucket );
+	break;
+    case 'rm':
+	promise = s3.remove( args.bucket );
+	break;
+    case 'scp':
+  	promise = s3.put( args.source, args.destination);
+	break;
+    case 'cp':
+	console.log( 'cp' );
+    	break;
+    }
 
-        switch ( args.s3SubCommandName ) {
-            case 'ls':
-	        s3.list();
-	        break;
-            case 'du':
-	        s3.du( args.bucket );
-	        break;
-            case 'mkdir':
-	        s3.create( args.bucket );
-	        break;
-            case 'rm':
-	        s3.remove( args.bucket );
-	        break;
-            case 'scp':
-  	        s3.put( args.source, args.destination);
-	        break;
-            case 'cp':
-	        console.log( 'cp' );
-    	        break;
-        }
-        break;
+    break;
 
-    case 'ec2':
-        var EC2 = require( './modules/ec2' );
-        var ec2 = new EC2( aws );
+case 'ec2':
+    var EC2 = require( './modules/ec2' );
+    var ec2 = new EC2( aws );
     
-        switch ( args.ec2SubCommandName ) {
-            case 'ls':
-                if ( args.types ) {
-                    var instanceTable = helper.table( 
-		        ['Family', 'Types'], 
-		        showBorders );
-                
-                    instanceTable.push(
-			['General purpose', 'm1.small, m1.medium, m1.large, m1.xlarge, m3.medium, \nm3.large, m3.xlarge, m3.2xlarge'],
-			['Compute optimized', 'c1.medium, c1.xlarge, c3.large, c3.xlarge, c3.2xlarge, \nc3.4xlarge, c3.8xlarge, cc2.8xlarge'],
-			['Memory optimized', 'm2.xlarge, m2.2xlarge, m2.4xlarge, r3.large, r3.xlarge, \nr3.2xlarge, r3.4xlarge, r3.8xlarge, cr1.8xlarge'],
-			['Storage optimized', 'hi1.4xlarge, hs1.8xlarge, i2.xlarge, i2.2xlarge, \ni2.4xlarge, i2.8xlarge'],
-			['Micro instances', 't1.micro'],
-			['GPU instances', 'cg1.4xlarge, g2.2xlarge']);
-                    console.log( instanceTable.toString());
-		} else {
-                    ec2.list( showBorders);
-		}
-                break;
-            case 'create':
-                ec2.create( args.name, args.ami, args.type, args.key );
-                break;
-            case 'rename':
-                ec2.rename( args.oldname, args.newname );
-                break;
-            case 'stop':
-                ec2.stop( args.instance );
-                break;
-            case 'start':
-                ec2.start( args.instance );
-                break;
-            case 'terminate':
-                ec2.terminate( args.instance);
-                break;
-            case 'setinstance':
-                ec2.setInstance( args.instance, args.type );
-                break;
-        }
-        break;
+    switch ( args.ec2SubCommandName ) {
+    case 'ls':
+        if ( args.types ) {
 
-    case 'eip':
-        var EIP = require( './modules/eip' );
-        var eip = new EIP( aws );
+	    helper.printTable({
+		head: ['Family', 'Types'],
+		rows: [
+		    [
+			'General purpose', 
+			'm1.small, m1.medium, m1.large, m1.xlarge, m3.medium, \nm3.large, m3.xlarge, m3.2xlarge'
+		    ], [
+			'Compute optimized',
+			'c1.medium, c1.xlarge, c3.large, c3.xlarge, c3.2xlarge, \nc3.4xlarge, c3.8xlarge, cc2.8xlarge'
+		    ],[
+			'Memory optimized', 
+			'm2.xlarge, m2.2xlarge, m2.4xlarge, r3.large, r3.xlarge, \nr3.2xlarge, r3.4xlarge, r3.8xlarge, cr1.8xlarge'
+		    ],[
+			'Storage optimized', 
+			'hi1.4xlarge, hs1.8xlarge, i2.xlarge, i2.2xlarge, \ni2.4xlarge, i2.8xlarge'
+		    ],[
+			'Micro instances',
+			't1.micro'
+		    ],[
+			'GPU instances',
+			'cg1.4xlarge, g2.2xlarge'
+		    ]]
+	    }, showBorders);
+
+	} else {
+            promise = ec2.list();
+	}
+        break;
+    case 'create':
+        promise = ec2.create( args.name, args.ami, args.type, args.key );
+        break;
+    case 'rename':
+        promise = ec2.rename( args.oldname, args.newname );
+        break;
+    case 'stop':
+        promise = ec2.stop( args.instance );
+        break;
+    case 'start':
+        promise = ec2.start( args.instance );
+        break;
+    case 'terminate':
+        promise = ec2.terminate( args.instance);
+        break;
+    case 'setinstance':
+        promise = ec2.setInstance( args.instance, args.type );
+        break;
+    }
     
-        switch ( args.eipSubCommandName ) {
-            case 'ls':
-                eip.list( showBorders );
-                break;
-            case 'allocate':
-                eip.allocate();
-                break;
-            case 'release':
-                eip.release( args.allocationId );
-                break;
-            case 'associate':
-                eip.associate( args.allocationId, args.instance );
-                break;
-            case 'disassociate':
-                eip.disassociate( args.associationId );
-                break;
-        }
-        break;
+    break;
 
-    case 'ebs':
-        var EBS = require( './modules/ebs' );
-        var ebs = new EBS( aws );
+case 'eip':
+    var EIP = require( './modules/eip' );
+    var eip = new EIP( aws );
     
-        switch ( args.ebsSubCommandName ) {
-            case 'ls':
-                ebs.list( showBorders );
-                break;
-        }
+    switch ( args.eipSubCommandName ) {
+    case 'ls':
+        promise = eip.list();
         break;
-
-    case 'sg':
-        var SG = require( './modules/sg' );
-        var sg = new SG( aws );
+    case 'allocate':
+        promise = eip.allocate();
+        break;
+    case 'release':
+        promise = eip.release( args.allocationId );
+        break;
+    case 'associate':
+        promise = eip.associate( args.allocationId, args.instance );
+        break;
+    case 'disassociate':
+        promise = eip.disassociate( args.associationId );
+        break;
+    }
     
-        switch ( args.sgSubCommandName ) {
-            case 'ls':
-                sg.list( showBorders );
-                break;
-        }
-        break;
+    break;
 
-    default:
-        console.log( parser.printHelp() );
+case 'ebs':
+    var EBS = require( './modules/ebs' );
+    var ebs = new EBS( aws );
+    
+    switch ( args.ebsSubCommandName ) {
+    case 'ls':
+        promise = ebs.list();
+        break;
+    }
+    
+    break;
+
+case 'sg':
+    var SG = require( './modules/sg' );
+    var sg = new SG( aws );
+    
+    switch ( args.sgSubCommandName ) {
+    case 'ls':
+        promise = sg.list();
+        break;
+    }
+    
+    break;
+
+default:
+    console.log( parser.printHelp() );
+    process.exit();
 }
+
+// resolve deferreds, exit program
+if ( promise ) {
+    promise.then( function( data ) {
+	if ( typeof data !== 'undefined' && data !== null ) {
+	    if ( data.hasOwnProperty( 'table' ) && data.table !== null ) {
+		helper.printTable( data.table, showBorders );
+	    } else if ( data.hasOwnProperty( 'message' ) && data.message !== null ) {
+		console.log( data.message );
+	    }
+	}
+
+	process.exit();
+    }).fail( function( err ) {
+	helper.err ( err );
+	process.exit( 1 );
+    });
+} else {
+    process.exit();
+}
+
+

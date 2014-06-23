@@ -20,6 +20,8 @@ S3.prototype = {
             data.Buckets.forEach( function( bucket ) {
                 console.log( bucket.Name );
             });
+
+	    process.exit( 0 );
         });
     },
     du : function( bucket, dir ) {
@@ -44,6 +46,7 @@ S3.prototype = {
             });
             
             console.log( 'Total size: ' + size + ' bytes' );
+	    process.exit( 0 );
         });
     },
     create: function( bucket ) {
@@ -53,6 +56,7 @@ S3.prototype = {
         
         this.s3.createBucket(params, function( err, data ) {
             if ( err ) return helper.err( err );
+	    process.exit( 0 );
         });
     },
     remove: function( bucket ) {
@@ -70,6 +74,8 @@ S3.prototype = {
                     helper.err( err );
                 }
             }
+
+	    process.exit( 0 );
         });
     },
     empty: function( bucket ) {
@@ -86,6 +92,7 @@ S3.prototype = {
             }
             
             emptyBucket( t, bucket, 0 );
+	    process.exit( 0 );
         });
     },
     put: function( path, bucket ) {
@@ -104,6 +111,8 @@ S3.prototype = {
                 } else {
                     putDir( s3, path, bucket );
                 }
+
+		process.exit( 0 );
             });
         } catch ( err ) {
             helper.err( err );

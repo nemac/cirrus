@@ -1,32 +1,48 @@
-var helper = require( './helper' );
+var Q = require( 'q' );
 
 var SG = function ( aws ) {
     this.ec2 = new aws.EC2();
 };
 
 SG.prototype = {
-    list: function( showBorders ) {
+    list: function() {
+	var deferred = Q.defer();
 	this.ec2.describeSecurityGroups( {}, function( err, data ) {
+	    if ( err )  return deferred.reject( err );
+
+	    var response = {
+		message: ''
+	    };
+
 	    var groups = data.SecurityGroups;
 
-	    if ( groups.length === 0 ) return console.log( 'No security groups.' );
+	    if ( groups.length === 0 ) {
+		response.message = 'No security groups.';
+		return deferred.resolve( response );
+	    }
 
-	    var table = helper.table(
-		['Group ID', 'Group Name', 'Inbound rules', 'Outbound rules'],
-		showBorders );
+	    response.table = {
+		head: [
+		    'Group ID', 
+		    'Group Name', 
+		    'Inbound rules', 
+		    'Outbound rules' ],
+		rows: []
+	    };
 
 	    groups.forEach( function( group ) {
-		table.push([
+		response.table.rows.push([
 		    group.GroupId,
 		    group.GroupName,
 		    summarizeIpRules( group.IpPermissions ),
 		    summarizeIpRules( group.IpPermissionsEgress )
 		]);
-
 	    });
-
-	    console.log( table.toString() );
+		
+	    deferred.resolve( response );
 	});
+
+	return deferred.promise;
     }
 };
 
@@ -49,7 +65,6 @@ function summarizeIpRules( rules ) {
     });
 
     return ports.join( '\n' );
-
 }
 
 module.exports = SG;
