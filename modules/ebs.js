@@ -69,6 +69,12 @@ EBS.prototype = {
 		}
                     
 		response.table.rows.push( row );
+
+		response.data.push({
+		    size: volume.Size,
+		    snapshot: 'TODO',
+		    attachment: 'TODO'
+		});
 	    });
 
 	    deferred.resolve( response );

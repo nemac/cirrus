@@ -41,14 +41,14 @@ cirrus s3 du -h
 | -b, --borders | show friendly bordered output for list table output |
 | -c, --cloud &lt;path&gt; | path to full cloud config file relative to cirrus.js; defaults to cloud.json |
 | -k, --keys &lt;path&gt; | path to keys file relative to cirrus.js; defaults to aws.json |
-|   **S3 (Simple Storage Solution)**                              ||
+|   **s3 (Simple Storage Solution)**                              ||
 | -h | help for S3 commands |
 | ls | list all buckets |
 | du &lt;bucket&gt; | disk usage for objects in a specified &lt;bucket&gt; |
 | mkdir &lt;bucket&gt; | create &lt;bucket&gt; |
 | rm &lt;bucket&gt; | remove &lt;bucket&gt;, prompts if not empty |
 | scp &lt;path&gt; &lt;bucket&gt; | put items in &lt;path&gt; recursively (if dir) into destination &lt;bucket&gt; |
-|   **EC2 (Elastic Cloud Compute)**                              ||
+|   **ec2 (Elastic Cloud Compute)**                              ||
 | -h | help for EC2 commands |
 | ls &#91;-t, --types&#93; | list all instances &#91;lists instance types&#93; |
 | create &lt;name&gt; &lt;ami&gt; &lt;type&gt; &lt;key&gt; | example: create foo ami-1624987f t1.micro MY_KEY |
@@ -57,19 +57,22 @@ cirrus s3 du -h
 | start &lt;instance&gt; | start &lt;instance&gt; |
 | terminate &lt;instance&gt; | terminate &lt;instance&gt; |
 | setinstance &lt;instance&gt; &lt;type&gt; | sets &lt;instance&gt; to be specified &lt;type&gt; |
-|   **EIP (Elastic IP)**                              ||
+|   **eip (Elastic IP)**                              ||
 | -h | help for EIP commands |
 | ls | list all Elastic IPs |
 | allocate | request a new Elastic IP address |
 | release &lt;ip&gt; | releases an Elastic IP allocation &lt;allocation id&gt; |
 | associate &lt;ip&gt; &lt;instance&gt; | associates an Elastic IP &lt;ip&gt; with an &lt;instance&gt; |
 | disassociate &lt;ip&gt; | disassociates an Elastic IP &lt;ip&gt; between an EIP allocation and and instance |
-|   **EBS (Elastic Block Store)**                              ||
+|   **ebs (Elastic Block Store)**                              ||
 | -h | help for EBS commands |
 | ls | list all EBS volumes |
-|   **SG (Security Groups)**                              ||
+|   **sg (Security Groups)**                              ||
 | -h | help for SG commands |
 | ls | list all Security Groups |
+|   **cloud (Full cloud infrastructure)**                              ||
+| -h | help for Cloud commands |
+| describe [-o <file>, --output-file <file>] | describes an entire cloud [writes out to specified <file>]  |
 
 ## Configuration
 Cirrus can use two JSON configuration files. By default, the script will look for aws.json (required for all operations) and cloud.json (required for full cloud operations). The path and name of each configuration file can be overriden with the -k &lt;path&gt; flag for keys, and with the -c &lt;path&gt; flag for cloud with a relative path from the location of cirrus.js.
@@ -88,13 +91,9 @@ aws.json.sample
 
 ## TODOs
 ### full cloud
-- --cloud-list
 - --cloud-compare &lt;path&gt; path to existing compare, will compare with provided config
 - --cloud-deploy
 - --cloud-snapshot &lt;path&gt; path to store config
-
-### ec2
-- specify sg on create
 
 ### ebs
 - attach
@@ -105,8 +104,13 @@ aws.json.sample
 - delete volume
 - bundle steps to resize volume?
 - rename (enforce uniqueness)
+- describe with enough info to create
 
 ## Version 2
+### cloud
+- diff to do negative comparison (what's in cloud but not in config?)
+- diff robust to handle subobjects
+
 ### sg
 - setsg
 - create sg?
@@ -118,6 +122,9 @@ aws.json.sample
 - get contents
 - rename
 - copy bucket to another bucket
+
+### ec2
+- specify multiple sgs on create
 
 ## all
 - support multiple args for identifying entities (name, id, etc)

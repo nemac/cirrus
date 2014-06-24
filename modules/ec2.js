@@ -88,7 +88,13 @@ EC2.prototype = {
 
 	return deferred.promise;
     },
-    create: function( name, image, type, keyName ) {
+    create: function( details ) {
+	var name = details.name;
+	var image = details.image;
+	var type = details.type;
+	var key = details.key;
+	var groups = details.groups;
+
 	var deferred = Q.defer();
         var ec2 = this.ec2;
 
@@ -104,7 +110,8 @@ EC2.prototype = {
                 ec2.runInstances({
                     ImageId: image,
                     InstanceType: type,
-                    KeyName: keyName,
+                    KeyName: key,
+		    SecurityGroups: groups,
                     MinCount: 1, 
                     MaxCount: 1
                 }, function( err, data ) {

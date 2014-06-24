@@ -17,12 +17,6 @@ parser.addArgument( ['-k', '--keys'], {
     nargs: 1,
     metavar: '<path>' });
 
-parser.addArgument( ['-c', '--cloud'], {
-    help: 'path to keys file relative to app.js; defaults to ./cloud.json',
-    nargs: 1,
-    metavar: '<path>' });
-
-
 parser.addArgument( ['-b', '--borders'], {
     help: 'show borders when displaying list output',
     action: 'storeTrue'
@@ -95,6 +89,7 @@ ec2Create.addArgument( ['name'], { metavar: '<name>' });
 ec2Create.addArgument( ['ami'], { metavar: '<ami>' });
 ec2Create.addArgument( ['type'], { metavar: '<type>' });
 ec2Create.addArgument( ['key'], { metavar: '<key>' });
+ec2Create.addArgument( ['group'], { metavar: '<group>' }); // TODO support multiple
 
 var ec2Rename = ec2Sub.addParser( 'rename', {
     addHelp: true,
@@ -183,13 +178,23 @@ var cloudSub = cloudParser.addSubparsers({
     title: 'Full Cloud Subcommands',
     dest: 'cloudSubCommandName' });
 
-cloudSub.addParser( 'describe', {
+var cloudDescribe = cloudSub.addParser( 'describe', {
     addHelp: true,
     help: 'describe an existing cloud infrastructure' });
 
+cloudDescribe.addArgument( ['-o', '--output-file'], {
+    help: 'file to write out cloud description file',
+    nargs: 1,
+    metavar: '<filename>' });
+
+cloudSub.addParser( 'diff', {
+    addHelp: true,
+    help: 'compare current cloud infrastructure with specified config file' })
+.addArgument( ['config'], { metavar: '<config>' });
+
 var args = parser.parseArgs();
 
-// load keys from command-line arg, failover to aws.json; will always look relative to script location
+// load keys from command-line arg, failover to aws.json; will look relative to THIS
 var keys = require( args.keys ? __dirname + '/' + args.keys[0] : __dirname + '/aws.json' );
 aws.config.update( keys );
 
@@ -262,7 +267,12 @@ case 'ec2':
 	}
         break;
     case 'create':
-        promise = ec2.create( args.name, args.ami, args.type, args.key );
+        promise = ec2.create({ 
+	    name: args.name, 
+	    image: args.ami, 
+	    type: args.type, 
+	    key: args.key,
+	    groups: [args.groups] });
         break;
     case 'rename':
         promise = ec2.rename( args.oldname, args.newname );
@@ -333,11 +343,21 @@ case 'sg':
 
 case 'cloud':
     var Cloud = require( './modules/cloud' );
-    var cloud = new Cloud( aws, 'TODO' );
+    var cloud = new Cloud( aws );
 
     switch( args.cloudSubCommandName ) {
     case 'describe':
-	cloud.describe();
+	var cloudArg = args.output_file ? __dirname + '/' + args.output_file[0] : null
+	cloud.describe( cloudArg );
+	break;
+    case 'diff':
+	try {
+	    config = require( __dirname + '/' + args.config );
+	    promise = cloud.diff( config );
+	} catch ( e ) {
+	    console.log( e );
+	    process.exit( 1 );
+	}	
 	break;
     }
 
@@ -365,5 +385,3 @@ if ( promise ) {
 	process.exit( 1 );
     });
 }
-
-
