@@ -1,4 +1,3 @@
-var helper = require( './helper' );
 var Q = require( 'q' );
 
 var EC2 = function( aws ) {
@@ -206,8 +205,7 @@ EC2.prototype = {
                 t.findEntities({
                     name: oldName
                 }).then( function( instances ) {
-		    // TODO renameInstance doesn't appear to be called here...
-                    renameInstance( ec2, instances[0].InstanceId, newName )
+                    renameInstance( t.ec2, instances[0].InstanceId, newName )
 			.then( function() {
 			    deferred.resolve();
 			}).fail( function ( err ) {
@@ -229,7 +227,6 @@ EC2.prototype = {
         var params = {};
         
         if ( typeof identifier !== 'undefined' && identifier !== null ) {
-            // TODO: potentially add more keys
             if ( identifier.hasOwnProperty( 'name' ) ) {
                 params = { 
                     Filters: [{ Name: 'tag:Name', Values: [identifier.name] }]
@@ -274,7 +271,6 @@ EC2.prototype = {
 };
 
 function renameInstance( ec2, id, name ) {
-    console.log( 'rename instance');
     var deferred = Q.defer();
     params = {
         Resources: [id],
@@ -283,11 +279,8 @@ function renameInstance( ec2, id, name ) {
             Value: name
         }]
     };
-
-    console.log( 'about to create tags function' );
     
     ec2.createTags( params, function( err ) {
-	console.log( 'in create tags' );
         if ( err ) return deferred.reject( err );
 	deferred.resolve();
     });

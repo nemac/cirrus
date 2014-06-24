@@ -16,9 +16,8 @@ EIP.prototype = {
             this.findEntities(),
             ec2util.findEntities()
         ]).then( function( resp ) {
-	    if ( resp[0].state === 'rejected' || resp[1].state === 'rejected' ) {
-		return;
-	    }
+	    var rejectReason = findIfHasRejectReason( resp );
+	    if ( rejectReason !== null ) return deferred.reject( rejectReason );
 
 	    var response = {
 		message: ''
@@ -62,9 +61,7 @@ EIP.prototype = {
             });
 
 	    deferred.resolve( response );
-        }).fail( function( err ) {
-	    deferred.reject( err );
-	});
+        });
 
 	return deferred.promise;
     },
@@ -104,9 +101,8 @@ EIP.prototype = {
             this.findEntities({ ip: ip }),
             ec2util.findEntities({ name: instance })
         ]).then( function( resp ) {
-	    if ( resp[0].state === 'rejected' || resp[1].state === 'rejected' ) {
-		return;
-	    }
+	    var rejectReason = findIfHasRejectReason( resp );
+	    if ( rejectReason !== null ) return deferred.reject( rejectReason );
 
             ec2.associateAddress({
                 AllocationId: resp[0].value[0].AllocationId,
@@ -115,9 +111,7 @@ EIP.prototype = {
 		if ( err ) return deferred.reject( err );
 		deferred.resolve();
             });
-        }).fail( function( err ) {
-	    deferred.reject( err );
-	});
+        })
 
 	return deferred.promise;
     },
@@ -164,5 +158,16 @@ EIP.prototype = {
         return deferred.promise;
     }
 };
+
+function findIfHasRejectReason( resp ) {
+    var rejectReason = null;
+    resp.some( function( r ) {
+	if ( r.state === 'rejected' ) {
+	    rejectReason = r.reason;
+	}
+    });
+
+    return rejectReason;
+}
 
 module.exports = EIP;
