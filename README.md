@@ -106,7 +106,6 @@ aws.json.sample
 - bundle steps to resize volume?
 - rename (enforce uniqueness)
 
-
 ## Version 2
 ### sg
 - setsg
@@ -115,6 +114,7 @@ aws.json.sample
 - delete sg?
 
 ### s3
+- use promises
 - get contents
 - rename
 - copy bucket to another bucket

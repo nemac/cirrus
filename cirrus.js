@@ -64,11 +64,14 @@ var s3scp = s3Sub.addParser( 'scp', {
 s3scp.addArgument( ['source'], { metavar: '<source>' } );
 s3scp.addArgument( ['destination'], { metavar: '<bucket>'} );
 
+// TODO add cp later
+/*
 var s3cp = s3Sub.addParser( 'cp', {
     addHelp: true,
     help: 'copies source bucket into destination bucket' });
 s3cp.addArgument( ['source'], { metavar: '<source>' } );
 s3cp.addArgument( ['destination'], { metavar: '<bucket>' } );
+*/
 
 // ec2 args
 var ec2Parser = subParsers.addParser( 'ec2', { addHelp: true } );
@@ -190,19 +193,19 @@ case 's3':
 
     switch ( args.s3SubCommandName ) {
     case 'ls':
-	promise = s3.list();
+	s3.list();
 	break;
     case 'du':
-	promise = s3.du( args.bucket );
+	s3.du( args.bucket );
 	break;
     case 'mkdir':
-	promise = s3.create( args.bucket );
+	s3.create( args.bucket );
 	break;
     case 'rm':
-	promise = s3.remove( args.bucket );
+	s3.remove( args.bucket );
 	break;
     case 'scp':
-  	promise = s3.put( args.source, args.destination);
+  	s3.put( args.source, args.destination);
 	break;
     case 'cp':
 	console.log( 'cp' );
@@ -338,8 +341,6 @@ if ( promise ) {
 	helper.err ( err );
 	process.exit( 1 );
     });
-} else {
-    process.exit();
 }
 
 

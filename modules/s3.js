@@ -75,7 +75,7 @@ S3.prototype = {
                 }
             }
 
-	    process.exit( 0 );
+	    //process.exit( 0 );
         });
     },
     empty: function( bucket ) {
@@ -92,15 +92,14 @@ S3.prototype = {
             }
             
             emptyBucket( t, bucket, 0 );
-	    process.exit( 0 );
+	    //process.exit( 0 );
         });
     },
     put: function( path, bucket ) {
         var s3 = this.s3;
         
         try {
-            fs.stat( path, function( err, stats ){
-		console.log( stats );
+            fs.stat( path, function( err, stats ) {
 		if ( typeof stats === 'undefined' ) {
 		    helper.err ( { code: 'File not found', message: 'Please check the source path' } );
 		    process.exit( 1 );
@@ -111,11 +110,10 @@ S3.prototype = {
                 } else {
                     putDir( s3, path, bucket );
                 }
-
-		process.exit( 0 );
             });
         } catch ( err ) {
             helper.err( err );
+	    process.exit( 1 );
         }
     }
  };
@@ -187,8 +185,11 @@ function putDir( s3, path, bucket ) {
         for (var i = 0; i < files.length; i++) {
             if ( i < files.length - 1 ) {
                 putFile( s3, files[i], bucket, getRelativeFile( files[i], path ), bar );
-            } else {
+            }  else {
                 putFile( s3, files[i], bucket, getRelativeFile( files[i], path ), bar, files.length );
+		if ( i === files.length - 1) {
+		    //process.exit( 0 );
+		}
             }
         };
     });
@@ -215,7 +216,10 @@ function putFile( s3, fileName, bucket, key, bar, len ) {
                     console.log();
                     console.log( '\n%s files uploaded to %s', len, bucket );
                 }
-            }
+            } else {
+		// exit because not being called recurisvely
+		//process.exit( 0 );
+	    }
         }
     });
 }
