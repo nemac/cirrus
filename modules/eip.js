@@ -39,6 +39,8 @@ EIP.prototype = {
 		    'Instance' ],
 		rows: []
 	    };
+
+	    response.data = [];
             
             // map instances to addresses
             var instanceMap = {};
@@ -58,6 +60,11 @@ EIP.prototype = {
                     address.AssociationId ? address.AssociationId : 'Not associated',
                     address.InstanceId ? instanceMap[address.InstanceId] : 'Not associated'
                 ]);
+
+		response.data.push({
+		    ip: address.PublicIp,
+		    instance: address.InstanceId ? instanceMap[address.InstanceId] : ''
+		});
             });
 
 	    deferred.resolve( response );

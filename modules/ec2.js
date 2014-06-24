@@ -30,6 +30,8 @@ EC2.prototype = {
 		    'Security Groups' ],
 		rows: []
 	    };
+
+	    response.data = [];
            
             // check if tags other than name
 	    var hasTags = false;
@@ -68,6 +70,15 @@ EC2.prototype = {
 		if ( hasTags ) row.splice( 2, 0, tags.join( ', ' ) );
 		
                 response.table.rows.push( row );
+
+		response.data.push({
+		    name: name,
+		    type: instance.InstanceType,
+		    key: instance.KeyName ? instance.KeyName : '',
+		    groups: groups,
+		    image: instance.ImageId
+		});
+
             });
             
 	    deferred.resolve( response );

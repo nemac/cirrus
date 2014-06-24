@@ -25,6 +25,8 @@ EBS.prototype = {
 		head: [],
 		rows: []
 	    };
+
+	    response.data = [];
             
 	    var hasTags = false;
 	    volumes.some( function( volume ) {

@@ -176,9 +176,20 @@ sgSub.addParser( 'ls', {
     addHelp: true,
     help: 'list all security groups' });
 
+// cloud args
+var cloudParser = subParsers.addParser( 'cloud', { addHelp: true } );
+
+var cloudSub = cloudParser.addSubparsers({
+    title: 'Full Cloud Subcommands',
+    dest: 'cloudSubCommandName' });
+
+cloudSub.addParser( 'describe', {
+    addHelp: true,
+    help: 'describe an existing cloud infrastructure' });
+
 var args = parser.parseArgs();
 
-// load config from command-line arg, failover to config.json; will always look relative to script location
+// load keys from command-line arg, failover to aws.json; will always look relative to script location
 var keys = require( args.keys ? __dirname + '/' + args.keys[0] : __dirname + '/aws.json' );
 aws.config.update( keys );
 
@@ -186,12 +197,12 @@ var showBorders = args.borders;
 
 var promise;
 
-switch ( args.subCommandName ) {
+switch( args.subCommandName ) {
 case 's3':
     var S3 = require( './modules/s3' );
     var s3 = new S3( aws );
 
-    switch ( args.s3SubCommandName ) {
+    switch( args.s3SubCommandName ) {
     case 'ls':
 	s3.list();
 	break;
@@ -218,7 +229,7 @@ case 'ec2':
     var EC2 = require( './modules/ec2' );
     var ec2 = new EC2( aws );
     
-    switch ( args.ec2SubCommandName ) {
+    switch( args.ec2SubCommandName ) {
     case 'ls':
         if ( args.types ) {
 
@@ -276,7 +287,7 @@ case 'eip':
     var EIP = require( './modules/eip' );
     var eip = new EIP( aws );
     
-    switch ( args.eipSubCommandName ) {
+    switch( args.eipSubCommandName ) {
     case 'ls':
         promise = eip.list();
         break;
@@ -300,7 +311,7 @@ case 'ebs':
     var EBS = require( './modules/ebs' );
     var ebs = new EBS( aws );
     
-    switch ( args.ebsSubCommandName ) {
+    switch( args.ebsSubCommandName ) {
     case 'ls':
         promise = ebs.list();
         break;
@@ -312,12 +323,24 @@ case 'sg':
     var SG = require( './modules/sg' );
     var sg = new SG( aws );
     
-    switch ( args.sgSubCommandName ) {
+    switch( args.sgSubCommandName ) {
     case 'ls':
         promise = sg.list();
         break;
     }
     
+    break;
+
+case 'cloud':
+    var Cloud = require( './modules/cloud' );
+    var cloud = new Cloud( aws, 'TODO' );
+
+    switch( args.cloudSubCommandName ) {
+    case 'describe':
+	cloud.describe();
+	break;
+    }
+
     break;
 
 default:
