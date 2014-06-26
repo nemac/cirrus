@@ -73,9 +73,10 @@ cirrus s3 du -h
 |   **cloud (Full cloud infrastructure)**                              ||
 | -h | help for Cloud commands |
 | describe [-o <file>, --output-file <file>] | describes an entire cloud [writes out to specified <file>]  |
+| diff <file> | compares your cloud to a configuration <file>; the comparison is one directional as in it will not report on what is in your cloud that is not in the configuration |
 
 ## Configuration
-Cirrus can use two JSON configuration files. By default, the script will look for aws.json (required for all operations) and cloud.json (required for full cloud operations). The path and name of each configuration file can be overriden with the -k &lt;path&gt; flag for keys, and with the -c &lt;path&gt; flag for cloud with a relative path from the location of cirrus.js.
+Cirrus requires a JSON configuration file for AWS authentication. By default, the script will look for aws.json. The path and name of each configuration file can be overriden with the -k &lt;path&gt; flag for keys with a relative path from the location of cirrus.js.
 
 ```json
 {
@@ -84,16 +85,9 @@ Cirrus can use two JSON configuration files. By default, the script will look fo
     "region": "yourRegionHere"
 }
 ```
-
-aws.json
-
-aws.json.sample
-
 ## TODOs
 ### full cloud
-- --cloud-compare &lt;path&gt; path to existing compare, will compare with provided config
 - --cloud-deploy
-- --cloud-snapshot &lt;path&gt; path to store config
 
 ### ebs
 - attach
@@ -109,7 +103,8 @@ aws.json.sample
 ## Version 2
 ### cloud
 - diff to do negative comparison (what's in cloud but not in config?)
-- diff robust to handle subobjects
+- expose config validation
+- intelligent eip handling
 
 ### sg
 - setsg

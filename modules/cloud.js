@@ -44,7 +44,10 @@ Cloud.prototype = {
 		    }
 		});
 	    } else {
-		deferred.resolve({ data: infrastructure });
+		deferred.resolve({
+		    data: infrastructure,
+		    message: infrastructureString
+		});
 	    }
 	});
 	
@@ -144,8 +147,6 @@ Cloud.prototype = {
 
 			deferred.resolve( response );
 		    }
-		    
-
 
 		}).fail( function( err ) {
 		    deferred.reject( err );

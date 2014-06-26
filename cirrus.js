@@ -348,11 +348,11 @@ case 'cloud':
     switch( args.cloudSubCommandName ) {
     case 'describe':
 	var cloudArg = args.output_file ? __dirname + '/' + args.output_file[0] : null
-	cloud.describe( cloudArg );
+	promise = cloud.describe( cloudArg );
 	break;
     case 'diff':
 	try {
-	    config = require( __dirname + '/' + args.config );
+	    var config = require( __dirname + '/' + args.config );
 	    promise = cloud.diff( config );
 	} catch ( e ) {
 	    console.log( e );
