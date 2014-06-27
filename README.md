@@ -67,13 +67,19 @@ cirrus s3 du -h
 |   **ebs (Elastic Block Store)**                              ||
 | -h | help for EBS commands |
 | ls | list all EBS volumes |
+| create &lt;name&gt; &lt;size&gt; &lt;snapshot&gt; | example: create foo 8 snap-b047276d |
+| rename &lt;oldname&gt; &lt;newname&gt; | renames volume from &lt;oldname&gt; to &lt;newname&gt;, enforces uniqueness |
+| name &lt;id&gt; &lt;newname&gt; | names a volume &lt;id&gt; to &lt;newname&gt;, enforces uniqueness, used for existing or generated volumes that are nameless |
+| attach &lt;volume&gt; &lt;instance&gt; &lt;device&gt; | attach a &lt;volume&gt; to &lt;instance&gt; as &lt;device&gt; |
+| detach &lt;volume&gt; | detatches &lt;volume&gt; from any instances it is attached to |
+| rm &lt;volume&gt; | removes (deletes) &lt;volume&gt; |
 |   **sg (Security Groups)**                              ||
 | -h | help for SG commands |
 | ls | list all Security Groups |
 |   **cloud (Full cloud infrastructure)**                              ||
 | -h | help for Cloud commands |
-| describe [-o <file>, --output-file <file>] | describes an entire cloud [writes out to specified <file>]  |
-| diff <file> | compares your cloud to a configuration <file>; the comparison is one directional as in it will not report on what is in your cloud that is not in the configuration |
+| describe &#91;-o &lt;file&gt;, --output-file &lt;file&gt;&#93; | describes an entire cloud [writes out to specified &lt;file&gt;]  |
+| diff &lt;file&gt; | compares your cloud to a configuration &lt;file&gt;; the comparison is one directional as in it will not report on what is in your cloud that is not in the configuration |
 
 ## Configuration
 Cirrus requires a JSON configuration file for AWS authentication. By default, the script will look for aws.json. The path and name of each configuration file can be overriden with the -k &lt;path&gt; flag for keys with a relative path from the location of cirrus.js.
@@ -87,18 +93,13 @@ Cirrus requires a JSON configuration file for AWS authentication. By default, th
 ```
 ## TODOs
 ### full cloud
-- --cloud-deploy
+- cloud deploy
 
 ### ebs
-- attach
-- detach
+- list snapshots
+- delete snapshot
 - create snapshot
-- create volume
-- create volume from snapshot
-- delete volume
-- bundle steps to resize volume?
-- rename (enforce uniqueness)
-- describe with enough info to create
+
 
 ## Version 2
 ### cloud
@@ -120,6 +121,10 @@ Cirrus requires a JSON configuration file for AWS authentication. By default, th
 
 ### ec2
 - specify multiple sgs on create
+
+### ebs
+- bundle steps to resize volume?
+- attachment resolve ec2 name
 
 ## all
 - support multiple args for identifying entities (name, id, etc)

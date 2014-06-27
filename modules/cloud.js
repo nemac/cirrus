@@ -26,12 +26,12 @@ Cloud.prototype = {
 
 	Q.allSettled([
 	    this.ec2Util.list(),
-	    this.eipUtil.list()
-	    //this.ebsUtil.list()
+	    this.eipUtil.list(),
+	    this.ebsUtil.list()
 	]).then( function( responses ) {
 	    infrastructure.ec2 = responses[0].value.data;
 	    infrastructure.eip = responses[1].value.data;
-	    //infrastructure.ebs = responses[2].value.data;
+	    infrastructure.ebs = responses[2].value.data;
 
 	    // TODO make the caller responsible for stringifying and writing the file
 	    var infrastructureString = JSON.stringify( infrastructure, null, 2 );

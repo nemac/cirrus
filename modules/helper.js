@@ -1,5 +1,6 @@
 var colors = require( 'colors' );
 var Table = require( 'cli-table' );
+var Q = require( 'q' );
 
 var commonInterface = {
     table: {},
@@ -81,3 +82,42 @@ function arraysIdentical( a, b ) {
     }
     return true;
 }
+
+exports.renameEntity = function( oldName, newName, findFunctionPromise, nameFunctionPromise ) {
+    var deferred = Q.defer();
+    var t = this;
+
+    Q.allSettled([
+	findFunctionPromise({
+	    name: oldName
+	}),
+	findFunctionPromise({
+	    name: newName
+	})
+    ]).then( function( resp ) {
+
+        renameInstance( t.ec2, instances[0].InstanceId, newName )
+	    .then( function() {
+		deferred.resolve();
+	    }).fail( function( err ) {
+		deferred.reject( err );
+	    });	
+    }).fail( function( err ) {
+	deferred.reject( err );
+    });
+
+    return deferred.promise;
+};
+
+exports.findIfHasRejectReason = findIfHasRejectReason;
+
+function findIfHasRejectReason( resp ) {
+    var rejectReason = null;
+    resp.some( function( r ) {
+	if ( r.state === 'rejected' ) {
+	    rejectReason = r.reason;
+	}
+    });
+
+    return rejectReason;
+};

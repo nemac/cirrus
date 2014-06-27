@@ -1,5 +1,6 @@
 var Q = require( 'q' );
 var EC2util = require( './ec2' );
+var helper = require( './helper' );
 
 var EIP = function( aws ) {
     this.aws = aws;
@@ -16,7 +17,7 @@ EIP.prototype = {
             this.findEntities(),
             ec2util.findEntities()
         ]).then( function( resp ) {
-	    var rejectReason = findIfHasRejectReason( resp );
+	    var rejectReason = helper.findIfHasRejectReason( resp );
 	    if ( rejectReason !== null ) return deferred.reject( rejectReason );
 
 	    var response = {
@@ -108,7 +109,7 @@ EIP.prototype = {
             this.findEntities({ ip: ip }),
             ec2util.findEntities({ name: instance })
         ]).then( function( resp ) {
-	    var rejectReason = findIfHasRejectReason( resp );
+	    var rejectReason = helper.findIfHasRejectReason( resp );
 	    if ( rejectReason !== null ) return deferred.reject( rejectReason );
 
             ec2.associateAddress({
@@ -165,16 +166,5 @@ EIP.prototype = {
         return deferred.promise;
     }
 };
-
-function findIfHasRejectReason( resp ) {
-    var rejectReason = null;
-    resp.some( function( r ) {
-	if ( r.state === 'rejected' ) {
-	    rejectReason = r.reason;
-	}
-    });
-
-    return rejectReason;
-}
 
 module.exports = EIP;

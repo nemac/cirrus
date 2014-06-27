@@ -1,4 +1,5 @@
 var Q = require( 'q' );
+var helper = require( './helper' );
 
 var EC2 = function( aws ) {
     this.ec2 = new aws.EC2();
@@ -290,7 +291,7 @@ EC2.prototype = {
 
 function renameInstance( ec2, id, name ) {
     var deferred = Q.defer();
-    params = {
+    var params = {
         Resources: [id],
         Tags: [{
             Key: 'Name',

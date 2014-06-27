@@ -160,6 +160,42 @@ ebsSub.addParser( 'ls', {
     addHelp: true,
     help: 'list all instances' });
 
+var ebsCreate = ebsSub.addParser( 'create', {
+    addHelp: true,
+    help: 'create instance' });
+ebsCreate.addArgument( ['name'], { metavar: '<name>' });
+ebsCreate.addArgument( ['size'], { metavar: '<size>' });
+ebsCreate.addArgument( ['snapshot'], { metavar: '<snapshot>' });
+
+var ebsName = ebsSub.addParser( 'name', {
+    addHelp: true,
+    help: 'rename volume' });
+ebsName.addArgument( ['id'], { metavar: '<id>' });
+ebsName.addArgument( ['name'], { metavar: '<name>' });
+
+var ebsRename = ebsSub.addParser( 'rename', {
+    addHelp: true,
+    help: 'rename volume' });
+ebsRename.addArgument( ['oldname'], { metavar: '<oldname>' });
+ebsRename.addArgument( ['newname'], { metavar: '<newname>' });
+
+var ebsAttach = ebsSub.addParser( 'attach', {
+    addHelp: true,
+    help: 'attach volume to an instance as a specified device' });
+ebsAttach.addArgument( ['volume'], { metavar: '<volume>' });
+ebsAttach.addArgument( ['instance'], { metavar: '<instance>' });
+ebsAttach.addArgument( ['device'], { metavar: '<device>' });
+
+ebsSub.addParser( 'detach', {
+    addHelp: true,
+    help: 'detach volume from any instances it is attached to' })
+.addArgument( ['volume'], { metavar: '<volume>' });
+
+ebsSub.addParser( 'rm', {
+    addHelp: true,
+    help: 'remove (delete) volume' })
+.addArgument( ['volume'], { metavar: '<volume>' });
+
 // sg args
 var sgParser = subParsers.addParser( 'sg', { addHelp: true } );
 
@@ -325,6 +361,28 @@ case 'ebs':
     case 'ls':
         promise = ebs.list();
         break;
+    case 'create':
+	promise = ebs.create({
+	    name: args.name,
+	    size: args.size,
+	    image: args.snapshot
+	});
+	break;
+    case 'rename':
+        promise = ebs.rename( args.oldname, args.newname );
+        break;
+    case 'name':
+	promise = ebs.name( args.id, args.name );
+	break;
+    case 'rm':
+	promise = ebs.remove( args.volume );
+	break;
+    case 'attach':
+	promise = ebs.attach( args.volume, args.instance, args.device );
+	break
+    case 'detach':
+	promise = ebs.detach( args.volume );
+	break
     }
     
     break;
