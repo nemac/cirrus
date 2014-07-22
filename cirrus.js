@@ -13,7 +13,7 @@ var parser = new ArgumentParser({
 
 // common
 parser.addArgument( ['-k', '--keys'], {
-    help: 'path to keys file relative to app.js; defaults to ./aws.json',
+    help: 'absolute path to keys file; defaults to CIRRUS_KEYS environment variable value, or "aws.json" in current directory',
     nargs: 1,
     metavar: '<path>' });
 
@@ -230,8 +230,16 @@ cloudSub.addParser( 'diff', {
 
 var args = parser.parseArgs();
 
-// load keys from command-line arg, failover to aws.json; will look relative to THIS
-var keys = require( args.keys ? __dirname + '/' + args.keys[0] : __dirname + '/aws.json' );
+// Load AWS keys.  Look first for command-line arg, then CIRRUS_KEYS env var, then "aws.json" in current dir
+var keys;
+try {
+    keys = require( args.keys ? args.keys[0]
+                              : ( process.env.CIRRUS_KEYS ? process.env.CIRRUS_KEYS
+                                                          : process.cwd() + '/aws.json' ));
+} catch ( e ) {
+    console.log("Cannot find AWS keys");
+    process.exit( 1 );
+}
 aws.config.update( keys );
 
 var showBorders = args.borders;
