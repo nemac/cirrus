@@ -316,7 +316,7 @@ case 'ec2':
 	    image: args.ami, 
 	    type: args.type, 
 	    key: args.key,
-	    groups: [args.groups] });
+	    groups: [args.group] });
         break;
     case 'rename':
         promise = ec2.rename( args.oldname, args.newname );
