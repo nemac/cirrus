@@ -1,3 +1,6 @@
+var fs = require('fs');
+var exec = require('child_process').exec;
+
 var Q = require( 'q' );
 var helper = require( './helper' );
 
@@ -240,6 +243,135 @@ EC2.prototype = {
 
 	return deferred.promise;
     },
+
+    sshConfig: function( name ) {
+	var deferred = Q.defer();
+        var ec2 = this.ec2;
+
+        this.findEntities({
+            name: name
+        }).then( function( instances ) {
+            //console.log(instances);
+            if (instances.length == 0) {
+	            deferred.reject({
+                    message: "No instance found with name: " + name
+                });
+            } else if (instances.length > 1) {
+	            deferred.reject({
+                    message: "Found more than one instance with name: " + name
+                });
+            } else {
+                var instance = instances[0];
+                var keyfile = process.env.CIRRUS_KEYS + "/" + instance.KeyName + ".pem";
+                if (fs.existsSync(keyfile)) {
+		            deferred.resolve({
+                        message: "-i " + keyfile + " root@" + instance.PublicIpAddress
+                    });
+                } else {
+	                deferred.reject({
+                        message: "cannot find keyfile: " + keyfile
+                    });
+                }
+            }
+        }).fail( function( err ) {
+	        deferred.reject( err );
+	    });
+
+	return deferred.promise;
+    },
+
+    ssh: function( name, command ) {
+	var deferred = Q.defer();
+        var ec2 = this.ec2;
+
+        this.findEntities({
+            name: name
+        }).then( function( instances ) {
+            if (instances.length == 0) {
+	            deferred.reject({
+                    message: "No instance found with name: " + name
+                });
+            } else if (instances.length > 1) {
+	            deferred.reject({
+                    message: "Found more than one instance with name: " + name
+                });
+            } else {
+                var instance = instances[0];
+                var keyfile = process.env.CIRRUS_KEYS + "/" + instance.KeyName + ".pem";
+                if (fs.existsSync(keyfile)) {
+                    var sshcommand = "ssh -i " + keyfile + " root@" + instance.PublicIpAddress + " '" + command + "'";
+                    exec(sshcommand, function(error, stdout, stderr) {
+                        if (error) {
+	                        deferred.reject({
+                                message: stderr
+                            });
+                        } else {
+		                    deferred.resolve({
+                                message: stdout
+                            });
+
+                        }
+                    });
+                } else {
+	                deferred.reject({
+                        message: "cannot find keyfile: " + keyfile
+                    });
+                }
+            }
+        }).fail( function( err ) {
+	        deferred.reject( err );
+	    });
+
+	return deferred.promise;
+    },
+
+    rsync: function( name, source, destination, options ) {
+	var deferred = Q.defer();
+        var ec2 = this.ec2;
+
+        this.findEntities({
+            name: name
+        }).then( function( instances ) {
+            if (instances.length == 0) {
+	            deferred.reject({
+                    message: "No instance found with name: " + name
+                });
+            } else if (instances.length > 1) {
+	            deferred.reject({
+                    message: "Found more than one instance with name: " + name
+                });
+            } else {
+                var instance = instances[0];
+                var keyfile = process.env.CIRRUS_KEYS + "/" + instance.KeyName + ".pem";
+                if (fs.existsSync(keyfile)) {
+                    var rsynccommand = ("rsync " + options + " -e 'ssh -i " + keyfile + "' "
+                                        + source
+                                        + " root@" + instance.PublicIpAddress + ":" + destination);
+                    exec(rsynccommand, function(error, stdout, stderr) {
+                        if (error) {
+	                        deferred.reject({
+                                message: stderr
+                            });
+                        } else {
+		                    deferred.resolve({
+                                message: stdout
+                            });
+
+                        }
+                    });
+                } else {
+	                deferred.reject({
+                        message: "cannot find keyfile: " + keyfile
+                    });
+                }
+            }
+        }).fail( function( err ) {
+	        deferred.reject( err );
+	    });
+
+	return deferred.promise;
+    },
+
     
     // TODO think of a better logical way to handle expectZeroEntities
     findEntities: function( identifier, expectZeroEntities ) {

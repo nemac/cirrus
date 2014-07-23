@@ -13,7 +13,7 @@ var parser = new ArgumentParser({
 
 // common
 parser.addArgument( ['-k', '--keys'], {
-    help: 'absolute path to keys file; defaults to CIRRUS_KEYS environment variable value, or "aws.json" in current directory',
+    help: 'absolute path to keys file; defaults to CIRRUS_AWS_KEYS environment variable value, or "aws.json" in current directory',
     nargs: 1,
     metavar: '<path>' });
 
@@ -110,6 +110,25 @@ ec2Sub.addParser( 'start', {
 ec2Sub.addParser( 'terminate', {
     addHelp: true,
     help: 'terminates a specified instance' })
+.addArgument( ['instance'], { metavar: '<instance>' });
+
+var ec2rsync = ec2Sub.addParser( 'rsync', {
+    addHelp: true,
+    help: 'run rsync to copy files to a running instance' });
+ec2rsync.addArgument( ['instance'], { metavar: '<instance>' })
+ec2rsync.addArgument( ['source'], { metavar: '<source>' });
+ec2rsync.addArgument( ['destination'], { metavar: '<destination>' });
+ec2rsync.addArgument( ['--options'], { metavar: '<options>', defaultValue: '', nargs: 1 });
+
+var ec2ssh = ec2Sub.addParser( 'ssh', {
+    addHelp: true,
+    help: 'execute an arbitrary ssh command on a running instance' });
+ec2ssh.addArgument( ['instance'], { metavar: '<instance>' })
+ec2ssh.addArgument( ['command'], { metavar: '<command>' });
+
+ec2Sub.addParser( 'sshconfig', {
+    addHelp: true,
+    help: 'print the ssh configuration string for a running instance' })
 .addArgument( ['instance'], { metavar: '<instance>' });
 
 var ec2SetInstance = ec2Sub.addParser( 'setinstance', {
@@ -230,11 +249,11 @@ cloudSub.addParser( 'diff', {
 
 var args = parser.parseArgs();
 
-// Load AWS keys.  Look first for command-line arg, then CIRRUS_KEYS env var, then "aws.json" in current dir
+// Load AWS keys.  Look first for command-line arg, then CIRRUS_AWS_KEYS env var, then "aws.json" in current dir
 var keys;
 try {
     keys = require( args.keys ? args.keys[0]
-                              : ( process.env.CIRRUS_KEYS ? process.env.CIRRUS_KEYS
+                              : ( process.env.CIRRUS_AWS_KEYS ? process.env.CIRRUS_AWS_KEYS
                                                           : process.cwd() + '/aws.json' ));
 } catch ( e ) {
     console.log("Cannot find AWS keys");
@@ -332,6 +351,15 @@ case 'ec2':
         break;
     case 'setinstance':
         promise = ec2.setInstance( args.instance, args.type );
+        break;
+    case 'sshconfig':
+        promise = ec2.sshConfig( args.instance );
+        break;
+    case 'ssh':
+        promise = ec2.ssh( args.instance, args.command );
+        break;
+    case 'rsync':
+        promise = ec2.rsync( args.instance, args.source, args.destination, args.options );
         break;
     }
     
