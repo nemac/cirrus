@@ -12,43 +12,57 @@ exports.err = function( err ) {
     console.log( '%s %s', code.red, err.message );
 };
 
-exports.printTable = function( tbl, hasBorders ) {
+exports.printTable = function( tbl, hasBorders, outputJson ) {
+
+    if (outputJson) {
+        var json = [];
+        tbl.rows.forEach(function (row) {
+            var obj = {};
+            row.forEach(function(val, i) {
+                obj[ tbl.head[i] ] = val;
+            });
+            json.push(obj);
+        });
+        console.log(json);
+        return;
+    }
+
     var chars = {};
     var formattedHead = [];
 
     tbl.head.forEach( function( th ) {
-	formattedHead.push( th.cyan );
+	    formattedHead.push( th.cyan );
     });
 
 
     if ( hasBorders ) {
     } else {
-	chars = { 
-	    'top': '',
-	    'top-mid': '',
-	    'top-left': '',
-	    'top-right': '',
-	    'bottom': '',
-	    'bottom-mid': '',
-	    'bottom-left': '',
-	    'bottom-right': '',
-	    'left': '',
-	    'left-mid': '',
-	    'mid': '',
-	    'mid-mid': '',
-	    'right': '',
-	    'right-mid': '',
-	    'middle': ''
-	};
+	    chars = { 
+	        'top': '',
+	        'top-mid': '',
+	        'top-left': '',
+	        'top-right': '',
+	        'bottom': '',
+	        'bottom-mid': '',
+	        'bottom-left': '',
+	        'bottom-right': '',
+	        'left': '',
+	        'left-mid': '',
+	        'mid': '',
+	        'mid-mid': '',
+	        'right': '',
+	        'right-mid': '',
+	        'middle': ''
+	    };
     }
 
     var table = new Table({
-	chars: chars,
-	head: formattedHead
+	    chars: chars,
+	    head: formattedHead
     });
 
     tbl.rows.forEach( function( row ) {
-	table.push( row );
+	    table.push( row );
     });
 
     console.log( table.toString() );

@@ -22,6 +22,11 @@ parser.addArgument( ['-b', '--borders'], {
     action: 'storeTrue'
 });
 
+parser.addArgument( ['-j', '--json'], {
+    help: 'print output in json format, instead of a human-readable table',
+    action: 'storeTrue'
+});
+
 var subParsers = parser.addSubparsers({
     title: 'subCommands',
     dest: 'subCommandName' });
@@ -262,6 +267,7 @@ try {
 aws.config.update( keys );
 
 var showBorders = args.borders;
+var outputJson = args.json;
 
 var promise;
 
@@ -323,7 +329,7 @@ case 'ec2':
 			'GPU instances',
 			'cg1.4xlarge, g2.2xlarge'
 		    ]]
-	    }, showBorders);
+	    }, showBorders, outputJson);
 
 	} else {
             promise = ec2.list();
@@ -467,7 +473,7 @@ if ( promise ) {
     promise.then( function( data ) {
 	if ( typeof data !== 'undefined' && data !== null ) {
 	    if ( data.hasOwnProperty( 'table' ) && data.table !== null ) {
-		helper.printTable( data.table, showBorders );
+		helper.printTable( data.table, showBorders, outputJson );
 	    } else if ( data.hasOwnProperty( 'message' ) && data.message !== null ) {
 		console.log( data.message );
 	    }
