@@ -1,5 +1,6 @@
 var fs = require('fs');
 var exec = require('child_process').exec;
+var spawn = require('child_process').spawn;
 
 var Q = require( 'q' );
 var helper = require( './helper' );
@@ -299,17 +300,26 @@ EC2.prototype = {
                 var instance = instances[0];
                 var keyfile = process.env.CIRRUS_KEYS + "/" + instance.KeyName + ".pem";
                 if (fs.existsSync(keyfile)) {
-                    var sshcommand = "ssh -i " + keyfile + " root@" + instance.PublicIpAddress + " '" + command + "'";
-                    exec(sshcommand, function(error, stdout, stderr) {
-                        if (error) {
-	                        deferred.reject({
-                                message: stderr
+                    var ssh = spawn("ssh", [
+                        "-i", keyfile,
+                        "root@" + instance.PublicIpAddress,
+                        command
+                    ]);
+                    ssh.stdout.on('data', function(data) {
+                        process.stdout.write(data);
+                    });
+                    ssh.stderr.on('data', function(data) {
+                        process.stdout.write(data);
+                    });
+                    ssh.on('close', function(code) {
+                        if (code === 0) {
+		                    deferred.resolve({
+                                message: ''
                             });
                         } else {
-		                    deferred.resolve({
-                                message: stdout
+	                        deferred.reject({
+                                message: 'ERROR'
                             });
-
                         }
                     });
                 } else {
