@@ -31,6 +31,7 @@ EC2.prototype = {
 		    'Type', 
 		    'State', 
 		    'Public IP', 
+		    'Private IP', 
 		    'Key Name', 
 		    'Security Groups' ],
 		rows: []
@@ -63,14 +64,15 @@ EC2.prototype = {
                 });
 
 		var row = [
-                    instance.InstanceId,
+            instance.InstanceId,
 		    name,
-                    instance.InstanceType,
-                    instance.State.Name,
-                    instance.PublicIpAddress ? instance.PublicIpAddress : '',
-                    instance.KeyName ? instance.KeyName : '',
-                    groups.join( ', ' ) ];
-                                
+            instance.InstanceType,
+            instance.State.Name,
+            instance.PublicIpAddress ? instance.PublicIpAddress : '',
+            instance.PrivateIpAddress ? instance.PrivateIpAddress : '',
+            instance.KeyName ? instance.KeyName : '',
+            groups.join( ', ' ) ];
+                
                 // TODO add EBS info?
 		if ( hasTags ) row.splice( 2, 0, tags.join( ', ' ) );
 		
