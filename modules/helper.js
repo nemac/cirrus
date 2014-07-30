@@ -23,7 +23,7 @@ exports.printTable = function( tbl, hasBorders, outputJson ) {
             });
             json.push(obj);
         });
-        console.log(json);
+        console.log(JSON.stringify(json));
         return;
     }
 
