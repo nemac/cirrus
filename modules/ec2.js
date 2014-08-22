@@ -70,7 +70,7 @@ EC2.prototype = {
             instance.State.Name,
             instance.PublicIpAddress ? instance.PublicIpAddress : '',
             instance.PrivateIpAddress ? instance.PrivateIpAddress : '',
-            instance.KeyName ? instance.KeyName : '',
+            instance.KeyName ? process.env.CIRRUS_KEYS + "/" + instance.KeyName  + ".pem" : '',
             groups.join( ', ' ) ];
                 
                 // TODO add EBS info?
