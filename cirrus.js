@@ -136,6 +136,15 @@ ec2Sub.addParser( 'sshconfig', {
 	help: 'print the ssh configuration string for a running instance' })
 	.addArgument( ['instance'], { metavar: '<instance>' });
 
+
+var ec2SetTag = ec2Sub.addParser( 'settag', {
+	addHelp: true,
+	help: 'set a tag value for an instance' });
+ec2SetTag.addArgument( ['name'], { metavar: '<name>' });
+ec2SetTag.addArgument( ['key'], { metavar: '<key>' });
+ec2SetTag.addArgument( ['value'], { metavar: '<value>' });
+
+
 var ec2SetInstance = ec2Sub.addParser( 'setinstance', {
 	addHelp: true,
 	help: 'set the instance type for a specified instance' });
@@ -367,6 +376,9 @@ case 'ec2':
 	case 'rsync':
 		promise = ec2.rsync( args.instance, args.source, args.destination, args.options );
 		break;
+	case 'settag':
+		promise = ec2.setTag(args.name, args.key, args.value);
+		break;
 	}
 	
 	break;
@@ -474,7 +486,7 @@ if ( promise ) {
 		if ( typeof data !== 'undefined' && data !== null ) {
 			if ( data.hasOwnProperty( 'table' ) && data.table !== null ) {
 				helper.printTable( data.table, showBorders, outputJson );
-			} else if ( data.hasOwnProperty( 'message' ) && data.message !== null ) {
+			} else if ( data.hasOwnProperty( 'message' ) && data.message !== null && data.message !== "" ) {
 				console.log( data.message );
 			}
 		}

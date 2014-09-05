@@ -384,6 +384,37 @@ EC2.prototype = {
         return deferred.promise;
     },
 
+    setTag: function( name, key, value ) {
+
+        var deferred = Q.defer();
+        var ec2 = this.ec2;
+
+        this.findEntities({
+            name: name
+        }, true ).then( function( instances ) {
+            if ( instances.length <= 0 ) {
+                return deferred.reject({
+                    code: 'Name not found',
+                    message: 'The name provided for the instance was not found.'
+                });
+            } else {
+                var tg = {};
+                tg[key] = value;
+                setTags( ec2, instances[0].InstanceId, tg )
+                    .then( function() {
+                        deferred.resolve();
+                    }).fail( function( err ) {
+                        deferred.reject( err );
+                    });
+            }
+        }).fail( function( err ) {
+            deferred.reject( err );
+        });
+
+        return deferred.promise;
+    },
+
+
     
     // TODO think of a better logical way to handle expectZeroEntities
     findEntities: function( identifier, expectZeroEntities ) {
@@ -441,6 +472,38 @@ function renameInstance( ec2, id, name ) {
             Key: 'Name',
             Value: name
         }]
+    };
+    
+    ec2.createTags( params, function( err ) {
+        if ( err ) return deferred.reject( err );
+        deferred.resolve();
+    });
+
+    return deferred.promise;
+}
+
+function setTags( ec2, id, tags ) {
+
+    // The incoming `tags` arg is an object.  Each property corresponds to a tag
+    // to be set; the property name is the name of the tag, the property value
+    // is the value.  For example:
+    //     { conf: 'webserver-a', color: 'brown' }
+    // The following converts the `tags` object to an array of the form:
+    //     [ { Key: 'conf', Value: 'webserver-a' },
+    //       { Key: 'color', Value: 'brown' } ]
+    var Tags = [];
+    Object.keys(tags).forEach(function(key) {
+        Tags.push({
+            Key   : key,
+            Value : tags[key]                                 
+        });
+    });
+
+    var deferred = Q.defer();
+
+    var params = {
+        Resources: [id],
+        Tags: Tags
     };
     
     ec2.createTags( params, function( err ) {
