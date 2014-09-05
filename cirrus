@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// -*-JavaScript-*-
 
 var aws = require( 'aws-sdk' );
 var ArgumentParser = require( 'argparse' ).ArgumentParser;
