@@ -74,7 +74,7 @@ EC2.prototype = {
                     groups.join( ', ' ) ];
                 
                 // TODO add EBS info?
-                if ( hasTags ) row.splice( 2, 0, tags.join( ', ' ) );
+                if ( hasTags ) row.splice( 2, 0, tags.join( "\n" ) );
                 
                 response.table.rows.push( row );
 
