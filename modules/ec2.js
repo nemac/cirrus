@@ -70,7 +70,9 @@ EC2.prototype = {
                     instance.State.Name,
                     instance.PublicIpAddress ? instance.PublicIpAddress : '',
                     instance.PrivateIpAddress ? instance.PrivateIpAddress : '',
-                    instance.KeyName ? process.env.CIRRUS_KEYS + "/" + instance.KeyName  + ".pem" : '',
+                    ( process.env.CIRRUS_PEM
+                      ? process.env.CIRRUS_PEM
+                      : (instance.KeyName ? process.env.CIRRUS_KEYS + "/" + instance.KeyName  + ".pem" : '') ),
                     groups.join( ', ' ) ];
                 
                 // TODO add EBS info?
@@ -265,7 +267,7 @@ EC2.prototype = {
                 });
             } else {
                 var instance = instances[0];
-                var keyfile = process.env.CIRRUS_KEYS + "/" + instance.KeyName + ".pem";
+                var keyfile = process.env.CIRRUS_PEM ? process.env.CIRRUS_PEM : process.env.CIRRUS_KEYS + "/" + instance.KeyName  + ".pem";
                 if (fs.existsSync(keyfile)) {
                     deferred.resolve({
                         message: "-i " + keyfile + " root@" + instance.PublicIpAddress
@@ -300,7 +302,7 @@ EC2.prototype = {
                 });
             } else {
                 var instance = instances[0];
-                var keyfile = process.env.CIRRUS_KEYS + "/" + instance.KeyName + ".pem";
+                var keyfile = process.env.CIRRUS_PEM ? process.env.CIRRUS_PEM : process.env.CIRRUS_KEYS + "/" + instance.KeyName  + ".pem";
                 if (fs.existsSync(keyfile)) {
                     var ssh = spawn("ssh", [
                         "-i", keyfile,
@@ -354,7 +356,7 @@ EC2.prototype = {
                 });
             } else {
                 var instance = instances[0];
-                var keyfile = process.env.CIRRUS_KEYS + "/" + instance.KeyName + ".pem";
+                var keyfile = process.env.CIRRUS_PEM ? process.env.CIRRUS_PEM : process.env.CIRRUS_KEYS + "/" + instance.KeyName  + ".pem";
                 if (fs.existsSync(keyfile)) {
                     var rsynccommand = ("rsync " + options + " -e 'ssh -i " + keyfile + "' "
                                         + source

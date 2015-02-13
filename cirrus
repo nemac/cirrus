@@ -14,7 +14,7 @@ var parser = new ArgumentParser({
 
 // common
 parser.addArgument( ['-k', '--keys'], {
-	help: 'absolute path to keys file; defaults to CIRRUS_AWS_KEYS environment variable value, or "aws.json" in current directory',
+	help: 'absolute path to json file containing AWS API keys; defaults value of CIRRUS_AWS_KEYS value, or file "aws.json" in current dir',
 	nargs: 1,
 	metavar: '<path>' });
 
