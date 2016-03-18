@@ -356,7 +356,7 @@ EBS.prototype = {
               return hasTags = snapshot.Tags.length > 1;
             });
 
-            response.table.head = ['Snapshot ID', 'Name', 'State', 'Start Time', 'Volume ID'];
+            response.table.head = ['Snapshot ID', 'Name', 'State', 'Start Time            ', 'Volume ID'];
 
             if (hasTags) {
               response.table.head.splice(2, 0, 'Tags');
