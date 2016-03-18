@@ -9,9 +9,29 @@ var EBS = function( aws ) {
 };
 
 EBS.prototype = {
-    list: function() {
+    list: function(filter) {
         var deferred = Q.defer();
-        this.ec2.describeVolumes( {}, function( err, data ) {
+
+        var params = {};
+
+        if (filter) {
+          filterParts = filter[0].split('=');
+          params = {
+            Filters: [{
+              Name : 'tag-key',
+              Values: [
+                filterParts[0]
+              ]
+            },{
+              Name: 'tag-value',
+              Values: [
+                filterParts[1]
+              ]
+            }]
+          }
+        }
+
+        this.ec2.describeVolumes( params, function( err, data ) {
             if ( err ) return deferred.reject( err );
 
             var response = {
@@ -19,7 +39,7 @@ EBS.prototype = {
             };
 
             var volumes = data.Volumes;
-            
+
             if ( volumes.length === 0 ) {
                 response.message =  'No EBS volumes';
                 return deferred.resolve( response );
@@ -31,7 +51,7 @@ EBS.prototype = {
             };
 
             response.data = [];
-            
+
             var hasTags = false;
             volumes.some( function( volume ) {
                 return hasTags = volume.Tags.length > 1;
@@ -72,14 +92,16 @@ EBS.prototype = {
                 if ( hasTags ) {
                     row.splice( 2, 0, tags.join( ', ' ) );
                 }
-                
+
                 response.table.rows.push( row );
 
                 response.data.push({
                     name: name,
+                    id: volume.VolumeId,
                     size: volume.Size,
                     snapshotId: volume.SnapshotId,
-                    attachment: attachments.length > 0 ? attachments.join( ', ' ) : ''
+                    attachment: attachments.length > 0 ? attachments.join( ', ' ) : '',
+                    tags: volume.Tags
                 });
             });
 
@@ -214,7 +236,7 @@ EBS.prototype = {
             if ( volumes.length !== 1 ) {
                 return deferred.reject({
                     code: 'Name not found',
-                    message: 'The name provided for the volume was not found.'          
+                    message: 'The name provided for the volume was not found.'
                 });
             }
 
@@ -267,7 +289,7 @@ EBS.prototype = {
             if ( volumes.length !== 1 ) {
                 return deferred.reject({
                     code: 'Name not found',
-                    message: 'The name provided for the volume was not found.'          
+                    message: 'The name provided for the volume was not found.'
                 });
             }
 
@@ -282,6 +304,145 @@ EBS.prototype = {
         });
 
         return deferred.promise;
+    },
+    listSnapshots: function(filter) {
+        var deferred = Q.defer();
+
+        var params = {
+          Filters: [{
+            Name: 'owner-id',
+            Values: [''] //TODO parameterize FOR NOW PUT VALUE HERE
+          }]
+        };
+
+        if (filter) {
+          filterParts = filter[0].split('=');
+          params.Filters.push({
+            Name: 'tag-key',
+            Values: [
+              filterParts[0]
+            ]
+          },{
+            Name: 'tag-value',
+            Values: [
+              filterParts[1]
+            ]
+          })
+        }
+
+        this.ec2.describeSnapshots(params, function(err, data) {
+            if (err) return deferred.reject(err);
+
+            var response = {
+              message: ''
+            };
+
+            var snapshots = data.Snapshots;
+
+            if (snapshots.length === 0) {
+              response.message =  'No EBS snapshots';
+              return deferred.resolve( response );
+            }
+
+            response.table = {
+              head: [],
+              rows: []
+            };
+
+            response.data = [];
+
+            var hasTags = false;
+            snapshots.some(function(snapshot) {
+              return hasTags = snapshot.Tags.length > 1;
+            });
+
+            response.table.head = ['Snapshot ID', 'Name', 'State', 'Start Time', 'Volume ID'];
+
+            if (hasTags) {
+              response.table.head.splice(2, 0, 'Tags');
+            }
+
+            snapshots.forEach(function(snapshot) {
+                var name = '';
+                var tags = [];
+
+                snapshot.Tags.forEach(function(tag) {
+                  if (tag.Key === 'Name') {
+                    name = tag.Value;
+                  } else {
+                    tags.push(tag.Key + ': ' + tag.Value);
+                  }
+                });
+
+                var row = [
+                    snapshot.SnapshotId,
+                    name,
+                    snapshot.State,
+                    snapshot.StartTime,
+                    snapshot.VolumeId];
+
+                if (hasTags) {
+                  row.splice(2, 0, tags.join(', '));
+                }
+
+                response.table.rows.push( row );
+
+                response.data.push({
+                    name: name,
+                    id: snapshot.VolumeId,
+                    size: snapshot.Size,
+                    snapshotId: snapshot.SnapshotId,
+                    startTime: snapshot.StartTime,
+                    tags: snapshot.Tags
+                });
+            });
+
+            deferred.resolve(response);
+        });
+
+        return deferred.promise;
+    },
+    takeSnapshot: function(volumeName) {
+      var deferred = Q.defer();
+      var ec2 = this.ec2;
+
+      this.findEntities({
+        name: volumeName
+      }).then(function(volumes) {
+        if (volumes.length !== 1) {
+          return deferred.reject({
+            code: 'Name not found',
+            message: 'The name provided for the volume was not found.'
+          });
+        }
+
+        var volume = volumes[0];
+
+        ec2.createSnapshot({
+          VolumeId: volume.id,
+          Description: 'Automated snapshot of ' + volume.name + ' generated on ' + new Date().toDateString()
+        }, function(err, data) {
+          if (err) return deferred.reject(err);
+
+          ec2.createTags({
+            Resources: [data.SnapshotId],
+            Tags: [{
+              Key: 'Source',
+              Value: volume.name
+            }, {
+              Key: 'CIRRUS',
+              Value: 'true'
+            }]
+          }, function(err, data) {
+            if (err) return deferred.reject(err);
+            deferred.resolve();
+          });
+        });
+      }).fail(function(err){
+        deferred.reject(err);
+      });
+
+      return deferred.promise;
     }
 };
 

@@ -73,6 +73,7 @@ s3scp.addArgument( ['destination'], { metavar: '<bucket>'} );
  s3cp.addArgument( ['destination'], { metavar: '<bucket>' } );
  */
 
+//------------------------------------------------------------------------------
 // ec2 args
 var ec2Parser = subParsers.addParser( 'ec2', { addHelp: true } );
 
@@ -152,6 +153,7 @@ var ec2SetInstance = ec2Sub.addParser( 'setinstance', {
 ec2SetInstance.addArgument( ['instance'], { metavar: '<instance>' });
 ec2SetInstance.addArgument( ['type'], { metavar: '<type>' });
 
+//------------------------------------------------------------------------------
 // elastic ip args
 var eipParser = subParsers.addParser( 'eip', { addHelp: true } );
 
@@ -183,6 +185,7 @@ eipSub.addParser( 'disassociate', {
 	help: 'disassocates Elastic IP address from an instance' })
 	.addArgument( ['associationId'], { metavar: '<association id>' });
 
+//------------------------------------------------------------------------------
 // ebs args
 var ebsParser = subParsers.addParser( 'ebs', { addHelp: true } );
 
@@ -190,9 +193,10 @@ var ebsSub = ebsParser.addSubparsers({
 	title: 'EBS (Elastic Block Store) Subcommands',
 	dest: 'ebsSubCommandName' });
 
-ebsSub.addParser( 'ls', {
+var ebsList = ebsSub.addParser( 'ls', {
 	addHelp: true,
 	help: 'list all instances' });
+ebsList.addArgument( ['--filter'], { metavar: '<filter>', defaultValue: '', nargs: 1 });
 
 var ebsCreate = ebsSub.addParser( 'create', {
 	addHelp: true,
@@ -230,6 +234,17 @@ ebsSub.addParser( 'rm', {
 	help: 'remove (delete) volume' })
 	.addArgument( ['volume'], { metavar: '<volume>' });
 
+ebsSub.addParser( 'listss', {
+	addHelp: true,
+	help: 'list all snapshots' })
+	.addArgument( ['--filter'], { metavar: '<filter>', defaultValue: '', nargs: 1 });
+
+ebsSub.addParser( 'ss', {
+	addHelp: true,
+	help: 'take a snapshot of specified volume'})
+	.addArgument(['volume'], {metavar: '<volume>'});
+
+//------------------------------------------------------------------------------
 // sg args
 var sgParser = subParsers.addParser( 'sg', { addHelp: true } );
 
@@ -241,6 +256,7 @@ sgSub.addParser( 'ls', {
 	addHelp: true,
 	help: 'list all security groups' });
 
+//------------------------------------------------------------------------------
 // cloud args
 var cloudParser = subParsers.addParser( 'cloud', { addHelp: true } );
 
@@ -261,6 +277,10 @@ cloudSub.addParser( 'diff', {
 	addHelp: true,
 	help: 'compare current cloud infrastructure with specified config file' })
 	.addArgument( ['config'], { metavar: '<config>' });
+
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 var args = parser.parseArgs();
 
@@ -312,7 +332,7 @@ case 's3':
 case 'ec2':
 	var EC2 = require( './modules/ec2' );
 	var ec2 = new EC2( aws );
-	
+
 	switch( args.ec2SubCommandName ) {
 	case 'ls':
 		if ( args.types ) {
@@ -321,16 +341,16 @@ case 'ec2':
 				head: ['Family', 'Types'],
 				rows: [
 					[
-						'General purpose', 
+						'General purpose',
 						'm1.small, m1.medium, m1.large, m1.xlarge, m3.medium, \nm3.large, m3.xlarge, m3.2xlarge'
 					], [
 						'Compute optimized',
 						'c1.medium, c1.xlarge, c3.large, c3.xlarge, c3.2xlarge, \nc3.4xlarge, c3.8xlarge, cc2.8xlarge'
 					],[
-						'Memory optimized', 
+						'Memory optimized',
 						'm2.xlarge, m2.2xlarge, m2.4xlarge, r3.large, r3.xlarge, \nr3.2xlarge, r3.4xlarge, r3.8xlarge, cr1.8xlarge'
 					],[
-						'Storage optimized', 
+						'Storage optimized',
 						'hi1.4xlarge, hs1.8xlarge, i2.xlarge, i2.2xlarge, \ni2.4xlarge, i2.8xlarge'
 					],[
 						'Micro instances',
@@ -346,10 +366,10 @@ case 'ec2':
 		}
 		break;
 	case 'create':
-		promise = ec2.create({ 
-			name: args.name, 
-			image: args.ami, 
-			type: args.type, 
+		promise = ec2.create({
+			name: args.name,
+			image: args.ami,
+			type: args.type,
 			key: args.key,
 			groups: [args.group] });
 		break;
@@ -381,13 +401,13 @@ case 'ec2':
 		promise = ec2.setTag(args.name, args.key, args.value);
 		break;
 	}
-	
+
 	break;
 
 case 'eip':
 	var EIP = require( './modules/eip' );
 	var eip = new EIP( aws );
-	
+
 	switch( args.eipSubCommandName ) {
 	case 'ls':
 		promise = eip.list();
@@ -405,16 +425,16 @@ case 'eip':
 		promise = eip.disassociate( args.associationId );
 		break;
 	}
-	
+
 	break;
 
 case 'ebs':
 	var EBS = require( './modules/ebs' );
 	var ebs = new EBS( aws );
-	
+
 	switch( args.ebsSubCommandName ) {
 	case 'ls':
-		promise = ebs.list();
+		promise = ebs.list(args.filter);
 		break;
 	case 'create':
 		promise = ebs.create({
@@ -437,21 +457,27 @@ case 'ebs':
 		break
 	case 'detach':
 		promise = ebs.detach( args.volume );
-		break
+		break;
+	case 'listss':
+		promise = ebs.listSnapshots(args.filter);
+		break;
+	case 'ss':
+		promise = ebs.takeSnapshot(args.volume);
+		break;
 	}
-	
+
 	break;
 
 case 'sg':
 	var SG = require( './modules/sg' );
 	var sg = new SG( aws );
-	
+
 	switch( args.sgSubCommandName ) {
 	case 'ls':
 		promise = sg.list();
 		break;
 	}
-	
+
 	break;
 
 case 'cloud':
@@ -470,7 +496,7 @@ case 'cloud':
 		} catch ( e ) {
 			console.log( e );
 			process.exit( 1 );
-		}	
+		}
 		break;
 	}
 
