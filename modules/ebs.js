@@ -311,7 +311,7 @@ EBS.prototype = {
         var params = {
           Filters: [{
             Name: 'owner-id',
-            Values: ['104538610210'] //TODO parameterize FOR NOW PUT VALUE HERE
+            Values: ['104538610210'] //TODO parameterize
           }]
         };
 

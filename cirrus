@@ -28,6 +28,11 @@ parser.addArgument( ['-j', '--json'], {
 	action: 'storeTrue'
 });
 
+parser.addArgument( ['-jj', '--jjson'], {
+	help: 'print output in REAL json format, instead of a human-readable table',
+	action: 'storeTrue'
+});
+
 var subParsers = parser.addSubparsers({
 	title: 'subCommands',
 	dest: 'subCommandName' });
@@ -303,6 +308,7 @@ aws.config.update( keys );
 
 var showBorders = args.borders;
 var outputJson = args.json;
+var outputRealJson = args.jjson;
 
 var promise;
 
@@ -518,7 +524,9 @@ default:
 if ( promise ) {
 	promise.then( function( data ) {
 		if ( typeof data !== 'undefined' && data !== null ) {
-			if ( data.hasOwnProperty( 'table' ) && data.table !== null ) {
+			if (outputRealJson && data.hasOwnProperty('data') && data.data !== null) {
+				console.log(JSON.stringify(data.data));
+			} else if ( data.hasOwnProperty( 'table' ) && data.table !== null ) {
 				helper.printTable( data.table, showBorders, outputJson );
 			} else if ( data.hasOwnProperty( 'message' ) && data.message !== null && data.message !== "" ) {
 				console.log( data.message );
