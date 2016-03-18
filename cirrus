@@ -244,6 +244,11 @@ ebsSub.addParser( 'ss', {
 	help: 'take a snapshot of specified volume'})
 	.addArgument(['volume'], {metavar: '<volume>'});
 
+ebsSub.addParser( 'deletess', {
+	addHelp: true,
+	help: 'delete specified snapshot'})
+	.addArgument(['ssid'], {metavar: '<ssid>'});
+
 //------------------------------------------------------------------------------
 // sg args
 var sgParser = subParsers.addParser( 'sg', { addHelp: true } );
@@ -464,6 +469,8 @@ case 'ebs':
 	case 'ss':
 		promise = ebs.takeSnapshot(args.volume);
 		break;
+	case 'deletess':
+		promise = ebs.deleteSnapshot(args.ssid)
 	}
 
 	break;

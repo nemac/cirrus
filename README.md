@@ -75,6 +75,7 @@ cirrus s3 du -h
 | rm &lt;volume&gt; | removes (deletes) &lt;volume&gt; |
 | listss &#91;--filter&#93; | list all snapshots &#91;filter by Key=Value&#93;, example: listss --filter Foo=bar |
 | ss &lt;volume&gt; | creates a snapshot of &lt;volume&gt; |
+| deletess &lt;snapshot-id&gt; | deletes snapshot with &lt;snapshot-id&gt; |
 |   **sg (Security Groups)**                              ||
 | -h | help for SG commands |
 | ls | list all Security Groups |

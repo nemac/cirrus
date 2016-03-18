@@ -311,7 +311,7 @@ EBS.prototype = {
         var params = {
           Filters: [{
             Name: 'owner-id',
-            Values: [''] //TODO parameterize FOR NOW PUT VALUE HERE
+            Values: ['104538610210'] //TODO parameterize FOR NOW PUT VALUE HERE
           }]
         };
 
@@ -418,9 +418,13 @@ EBS.prototype = {
 
         var volume = volumes[0];
 
+        var volName = volume.Tags.filter(function(tag) {
+          return tag.Key === 'Name';
+        })[0].Value;
+
         ec2.createSnapshot({
-          VolumeId: volume.id,
-          Description: 'Automated snapshot of ' + volume.name + ' generated on ' + new Date().toDateString()
+          VolumeId: volume.VolumeId,
+          Description: 'Automated snapshot of ' + volName + ' generated on ' + new Date().toDateString()
         }, function(err, data) {
           if (err) return deferred.reject(err);
 
@@ -428,7 +432,7 @@ EBS.prototype = {
             Resources: [data.SnapshotId],
             Tags: [{
               Key: 'Source',
-              Value: volume.name
+              Value: volName
             }, {
               Key: 'CIRRUS',
               Value: 'true'
@@ -440,6 +444,18 @@ EBS.prototype = {
         });
       }).fail(function(err){
         deferred.reject(err);
+      });
+
+      return deferred.promise;
+    },
+    deleteSnapshot: function(ssid) {
+      var deferred = Q.defer();
+
+      this.ec2.deleteSnapshot({
+        SnapshotId: ssid
+      }, function(err) {
+          if (err) return deferred.reject(err);
+          deferred.resolve();
       });
 
       return deferred.promise;
