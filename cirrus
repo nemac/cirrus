@@ -296,10 +296,13 @@ var args = parser.parseArgs();
 
 // Load AWS keys.  Look first for command-line arg, then CIRRUS_AWS_KEYS env var, then "aws.json" in current dir
 var keys;
+var accountId = '';
 try {
 	keys = require( args.keys ? args.keys[0]
 					: ( process.env.CIRRUS_AWS_KEYS ? process.env.CIRRUS_AWS_KEYS
 						: process.cwd() + '/aws.json' ));
+
+	accountId = keys.accountId;
 } catch ( e ) {
 	console.log("Cannot find AWS keys");
 	process.exit( 1 );
@@ -470,7 +473,7 @@ case 'ebs':
 		promise = ebs.detach( args.volume );
 		break;
 	case 'listss':
-		promise = ebs.listSnapshots(args.filter);
+		promise = ebs.listSnapshots(args.filter, accountId);
 		break;
 	case 'ss':
 		promise = ebs.takeSnapshot(args.volume);

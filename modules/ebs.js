@@ -305,13 +305,13 @@ EBS.prototype = {
 
         return deferred.promise;
     },
-    listSnapshots: function(filter) {
+    listSnapshots: function(filter, accountId) {
         var deferred = Q.defer();
 
         var params = {
           Filters: [{
             Name: 'owner-id',
-            Values: ['104538610210'] //TODO parameterize
+            Values: [accountId]
           }]
         };
 
