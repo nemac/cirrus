@@ -157,6 +157,10 @@ EBS.prototype = {
                 params = {
                     Filters: [{ Name: 'tag:Name', Values: [identifier.name] }]
                 };
+            } else if ( identifier.hasOwnProperty( 'id' ) ) {
+                params = {
+                    VolumeIds: [ identifier.id ] 
+                };
             }
         }
 
@@ -402,48 +406,51 @@ EBS.prototype = {
 
         return deferred.promise;
     },
-    takeSnapshot: function(volumeName) {
+    takeSnapshot: function(volumeNameOrId) {
       var deferred = Q.defer();
       var ec2 = this.ec2;
-
+      var that = this;
       this.findEntities({
-        name: volumeName
+        name: volumeNameOrId
       }).then(function(volumes) {
-        if (volumes.length !== 1) {
-          return deferred.reject({
-            code: 'Name not found',
-            message: 'The name provided for the volume was not found.'
-          });
-        }
-
-        var volume = volumes[0];
-
-        var volName = volume.Tags.filter(function(tag) {
-          return tag.Key === 'Name';
-        })[0].Value;
-
-        ec2.createSnapshot({
-          VolumeId: volume.VolumeId,
-          Description: 'Automated snapshot of ' + volName + ' generated on ' + new Date().toDateString()
-        }, function(err, data) {
-          if (err) return deferred.reject(err);
-
-          ec2.createTags({
-            Resources: [data.SnapshotId],
-            Tags: [{
-              Key: 'Source',
-              Value: volName
-            }, {
-              Key: 'CIRRUS',
-              Value: 'true'
-            }]
-          }, function(err, data) {
-            if (err) return deferred.reject(err);
-            deferred.resolve();
-          });
-        });
+          if (volumes.length == 0) {
+              that.findEntities({
+                  id: volumeNameOrId
+              }).then(function(volumes) {
+                  if (volumes.length !== 1) {
+                      return deferred.reject({
+                          code: 'id/name not found',
+                          message: 'The id/name provided for the volume was not found.'
+                      });
+                  }
+                  var volume = volumes[0];
+                  createVolumeSnapshot(ec2, volume).then(function() {
+                      return deferred.resolve();
+                  }).fail(function(err) {
+                      return deferred.reject(err);
+                  });
+              }).fail(function(err){
+                  return deferred.reject(err);
+              });
+          } else {
+              if (volumes.length !== 1) {
+                  return deferred.reject({
+                      code: 'Name not unique',
+                      message: 'The name provided for the volume was not unique.'
+                  });
+              }
+              
+              var volume = volumes[0];
+              
+              createVolumeSnapshot(ec2, volume).then(function() {
+                  return deferred.resolve();
+              }).fail(function(err) {
+                  return deferred.reject(err);
+              });
+          }
+          
       }).fail(function(err){
-        deferred.reject(err);
+        return deferred.reject(err);
       });
 
       return deferred.promise;
@@ -485,6 +492,35 @@ function getSnapshot( identifier ) {
             }
         });
 
+    return deferred.promise;
+}
+
+function createVolumeSnapshot(ec2, volume) {
+    var deferred = Q.defer();
+    var volName = volume.Tags.filter(function(tag) {
+        return tag.Key === 'Name';
+    })[0].Value;
+    ec2.createSnapshot({
+        VolumeId: volume.VolumeId,
+        Description: 'Automated snapshot of ' + volName + ' generated on ' + new Date().toDateString()
+    }, function(err, data) {
+        if (err) {
+            return deferred.reject(err);
+        }
+        ec2.createTags({
+            Resources: [data.SnapshotId],
+            Tags: [{
+                Key: 'Source',
+                Value: volName
+            }, {
+                Key: 'CIRRUS',
+                Value: 'true'
+            }]
+        }, function(err, data) {
+            if (err) return deferred.reject(err);
+            deferred.resolve();
+        });
+    });
     return deferred.promise;
 }
 
