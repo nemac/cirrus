@@ -6,6 +6,15 @@ var ArgumentParser = require( 'argparse' ).ArgumentParser;
 var helper = require( './modules/helper' );
 var Q = require( 'q' );
 
+function tag_strings_to_tag_objs(arr) {
+    // Takes a JS array of strings of the form ["tag1=value1", "tag2=value2", ...] and
+    // returns an array of objects of the form [ {Key:"tag1", Value:"value1"}, {Key:"tag2", Value:"value2"}, ...]
+    return arr.map(function(t) {
+        var fields = t.split(/=/)
+        return {Key: fields[0], Value: fields[1]};
+    });
+}
+
 // command-line interface
 var parser = new ArgumentParser({
 	version: '0.0.1',
@@ -244,10 +253,11 @@ ebsSub.addParser( 'listss', {
 	help: 'list all snapshots' })
 	.addArgument( ['--filter'], { metavar: '<filter>', defaultValue: '', nargs: 1 });
 
-ebsSub.addParser( 'ss', {
+var ebsTakeSnapshot = ebsSub.addParser( 'ss', {
 	addHelp: true,
-	help: 'take a snapshot of specified volume'})
-	.addArgument(['volume'], {metavar: '<volume>'});
+	help: 'take a snapshot of specified volume'});
+ebsTakeSnapshot.addArgument(['volume'], {metavar: '<volume>'});
+ebsTakeSnapshot.addArgument(['--tags'], {metavar: '<tags>', defaultValue: [], nargs: "*"});
 
 ebsSub.addParser( 'deletess', {
 	addHelp: true,
@@ -476,7 +486,7 @@ case 'ebs':
 		promise = ebs.listSnapshots(args.filter, accountId);
 		break;
 	case 'ss':
-		promise = ebs.takeSnapshot(args.volume);
+		promise = ebs.takeSnapshot(args.volume, tag_strings_to_tag_objs(args.tags));
 		break;
 	case 'deletess':
 		promise = ebs.deleteSnapshot(args.ssid)

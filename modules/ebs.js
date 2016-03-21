@@ -406,7 +406,7 @@ EBS.prototype = {
 
         return deferred.promise;
     },
-    takeSnapshot: function(volumeNameOrId) {
+    takeSnapshot: function(volumeNameOrId, tags) {
       var deferred = Q.defer();
       var ec2 = this.ec2;
       var that = this;
@@ -424,7 +424,7 @@ EBS.prototype = {
                       });
                   }
                   var volume = volumes[0];
-                  createVolumeSnapshot(ec2, volume).then(function() {
+                  createVolumeSnapshot(ec2, volume, tags).then(function() {
                       return deferred.resolve();
                   }).fail(function(err) {
                       return deferred.reject(err);
@@ -442,7 +442,7 @@ EBS.prototype = {
               
               var volume = volumes[0];
               
-              createVolumeSnapshot(ec2, volume).then(function() {
+              createVolumeSnapshot(ec2, volume, tags).then(function() {
                   return deferred.resolve();
               }).fail(function(err) {
                   return deferred.reject(err);
@@ -495,7 +495,7 @@ function getSnapshot( identifier ) {
     return deferred.promise;
 }
 
-function createVolumeSnapshot(ec2, volume) {
+function createVolumeSnapshot(ec2, volume, tags) {
     var deferred = Q.defer();
     var volName = volume.Tags.filter(function(tag) {
         return tag.Key === 'Name';
@@ -507,15 +507,16 @@ function createVolumeSnapshot(ec2, volume) {
         if (err) {
             return deferred.reject(err);
         }
+        tags = tags.concat([{
+            Key: 'Source',
+            Value: volName
+        }, {
+            Key: 'CIRRUS',
+            Value: 'true'
+        }]);
         ec2.createTags({
             Resources: [data.SnapshotId],
-            Tags: [{
-                Key: 'Source',
-                Value: volName
-            }, {
-                Key: 'CIRRUS',
-                Value: 'true'
-            }]
+            Tags: tags
         }, function(err, data) {
             if (err) return deferred.reject(err);
             deferred.resolve();
