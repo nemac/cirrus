@@ -259,6 +259,14 @@ var ebsTakeSnapshot = ebsSub.addParser( 'ss', {
 ebsTakeSnapshot.addArgument(['volume'], {metavar: '<volume>'});
 ebsTakeSnapshot.addArgument(['--tags'], {metavar: '<tags>', defaultValue: [], nargs: "*"});
 
+var ebsSetTag = ebsSub.addParser( 'settag', {
+	addHelp: true,
+	help: 'set a tag value for an instance' });
+ebsSetTag.addArgument( ['name'], { metavar: '<name>' });
+ebsSetTag.addArgument( ['key'], { metavar: '<key>' });
+ebsSetTag.addArgument( ['value'], { metavar: '<value>' });
+
+
 ebsSub.addParser( 'deletess', {
 	addHelp: true,
 	help: 'delete specified snapshot'})
@@ -490,6 +498,9 @@ case 'ebs':
 		break;
 	case 'deletess':
 		promise = ebs.deleteSnapshot(args.ssid)
+	case 'settag':
+		promise = ebs.setTag(args.name, args.key, args.value);
+		break;
 	}
 
 	break;

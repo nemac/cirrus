@@ -466,7 +466,60 @@ EBS.prototype = {
       });
 
       return deferred.promise;
+    },
+
+    setTag: function( volumeNameOrId, key, value ) {
+
+        var deferred = Q.defer();
+        var ec2 = this.ec2;
+        var tg = {};
+        tg[key] = value;
+        var that = this;
+
+        this.findEntities({
+            name: volumeNameOrId
+        }).then(function(volumes) {
+            if (volumes.length == 0) {
+                that.findEntities({
+                    id: volumeNameOrId
+                }).then(function(volumes) {
+                    if (volumes.length !== 1) {
+                        return deferred.reject({
+                            code: 'id/name not found',
+                            message: 'The id/name provided for the volume was not found.'
+                        });
+                    }
+                    var volume = volumes[0];
+                    setTags( ec2, volume.VolumeId, tg )
+                        .then( function() {
+                            deferred.resolve();
+                        }).fail( function( err ) {
+                            deferred.reject( err );
+                        });
+                }).fail(function(err){
+                    return deferred.reject(err);
+                });
+            } else {
+                if (volumes.length !== 1) {
+                    return deferred.reject({
+                        code: 'Name not unique',
+                        message: 'The name provided for the volume was not unique.'
+                    });
+                }
+                var volume = volumes[0];
+                setTags( ec2, volume.VolumeId, tg )
+                    .then( function() {
+                        deferred.resolve();
+                    }).fail( function( err ) {
+                        deferred.reject( err );
+                    });
+            }
+        }).fail(function(err){
+            return deferred.reject(err);
+        });
+        return deferred.promise;
     }
+
 };
 
 function getSnapshot( identifier ) {
@@ -522,6 +575,38 @@ function createVolumeSnapshot(ec2, volume, tags) {
             deferred.resolve();
         });
     });
+    return deferred.promise;
+}
+
+function setTags( ec2, id, tags ) {
+
+    // The incoming `tags` arg is an object.  Each property corresponds to a tag
+    // to be set; the property name is the name of the tag, the property value
+    // is the value.  For example:
+    //     { conf: 'webserver-a', color: 'brown' }
+    // The following converts the `tags` object to an array of the form:
+    //     [ { Key: 'conf', Value: 'webserver-a' },
+    //       { Key: 'color', Value: 'brown' } ]
+    var Tags = [];
+    Object.keys(tags).forEach(function(key) {
+        Tags.push({
+            Key   : key,
+            Value : tags[key]                                 
+        });
+    });
+
+    var deferred = Q.defer();
+
+    var params = {
+        Resources: [id],
+        Tags: Tags
+    };
+
+    ec2.createTags( params, function( err ) {
+        if ( err ) return deferred.reject( err );
+        deferred.resolve();
+    });
+
     return deferred.promise;
 }
 
